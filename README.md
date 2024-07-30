@@ -1,1 +1,145 @@
-# SuperVINS
+<!--
+ * @Author: Hongkun Luo
+ * @Date: 2024-07-24 03:11:30
+ * @LastEditors: Hongkun Luo
+ * @Description: 
+ * 
+ * Hongkun Luo
+-->
+
+# SuperVINS:A SLAM framework that applies deep learning features to the entire front-end and loopback process
+
+![Static Badge](https://img.shields.io/badge/VINS-Image_IMU-red) ![Static Badge](https://img.shields.io/badge/Cpp-11-blue) ![Static Badge](https://img.shields.io/badge/DeepLearning-SuperPoint_LightGlue-red) ![Static Badge](https://img.shields.io/badge/ROS1-melodic-blue) ![Static Badge](https://img.shields.io/badge/BoW-DBoW3-red) ![Static Badge](https://img.shields.io/badge/WHU-BRAIN_LAB-red) ![Static Badge](https://img.shields.io/badge/luohongk-blue) ![Static Badge](https://img.shields.io/badge/Wuhan-China-green)
+
+<div align=center><img src="resources\SuperVINS.png" width =100%></div>
+
+# 1 简要介绍
+
+本项目是基于VINS-Fusion进行改进，[VINS-Fusion](https://github.com/HKUST-Aerial-Robotics/VINS-Fusion)是一个著名的SLAM框架。原版本的VINS-Fusion前端采用的是传统几何特征点然后进行光流追踪，本项目使用特征点法，引入了SuperPoint特征点与特征描述符，使用LightGlue网络进行特征匹配。在回环部分，原版的VINS-Fusion提取brief描述符，采用DBoW2进行回环检测，本项目使用DBoW3与SuperPoint深度学习描述符进行回环检测。打造了一个基于深度学习的SLAM系统。
+
+# 2 构建项目
+
+### 2.1 **Ubuntu** and **ROS**
+
+Ubuntu 64-bit 18.04.
+ROS Melodic. **[ROS Installation](http://wiki.ros.org/ROS/Installation)**
+
+### 2.2 **OpenCV**
+
+OpenCV3.2.0. **[OpenCV3.2.0](https://github.com/opencv/opencv/archive/refs/tags/3.2.0.zip)**
+
+if you use Ubuntu 18.04, you can install it by:`sudo apt-get install libopencv-dev`
+
+### 2.3 **Ceres Solver**
+
+Follow **[Ceres Installation](http://ceres-solver.org/installation.html)**.
+**[Ceres 2.1.0](https://github.com/ceres-solver/ceres-solver/releases/tag/2.1.0)**.
+
+### 2.4 **ONNX RUNTIME**
+
+**[onnxruntime-linux-x64-gpu-1.16.3](https://github.com/microsoft/onnxruntime/releases/download/v1.16.3/onnxruntime-linux-x64-gpu-1.16.3.tgz)**
+
+### 2.5 **install libraries to the specified path**
+
+**If you want to install the third-party library in the specified path, you can follow the steps below**
+
+```bash
+mkdir build
+cd build
+cmake -D CMAKE_INSTALL_PREFIX="/some/where/local"  ..
+make -j4
+make install
+```
+
+# 3 创建ROS1工作区
+
+```bash
+mkdir -p ~/catkin_ws/src
+cd ~/catkin_ws/src/
+catkin_init_workspace
+cd ~/catkin_ws
+catkin_make
+echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bash
+source ~/.bashrc
+```
+
+# 4 如何运行？
+
+### 4.1 克隆项目
+
+```bash
+  cd ~/catkin_ws/src
+  git clone https://github.com/luohongk/SuperVINS.git
+```
+
+### 4.2 数据下载
+
+You can download the specified data set yourself, or you can use download_data.sh to download the data set. The download method is as follows.
+
+```bash
+cd ~/catkin_ws/src/SuperVINS
+chmod +x download_data.sh
+./download_data.sh
+```
+
+### 4.3 路径更改
+
+Absolute paths are used in some places in the project. You need to simply change the path configuration according to your own computer path. The change method is as follows
+
+* file:vins_estimator\CMakeLists.txt , supervins_loop_fusion\CMakeLists.txt , camera_models\CMakeLists.txt
+
+```bash
+change
+set(ONNXRUNTIME_ROOTDIR "/home/lhk/Thirdparty/onnxruntime")
+find_package(Ceres REQUIRED PATHS "/home/lhk/Thirdparty/Ceres")
+to
+set(ONNXRUNTIME_ROOTDIR "your onnxruntime path")
+find_package(Ceres REQUIRED PATHS "you Ceres path")
+```
+
+* file:supervins_loop_fusion\src\pose_graph_node.cpp
+  line 554
+
+```bash
+change
+string vocabulary_file = "/home/lhk/catkin_ws/src/VINS_SPLG_BOW/loop_fusion/src/ThirdParty/Voc/superpoint.yml.gz";
+to
+string vocabulary_file = "your superpoint.yml.gz path";
+```
+
+* file:config\euroc\euroc_mono_imu_config.yaml
+  line:61,65,66
+
+```bash
+change
+pose_graph_save_path: "/home/lhk/catkin_ws/src/SuperVINS/output"
+extractor_weight_path: "/home/lhk/catkin_ws/src/SuperVINS/vins_estimator/weights_dpl/superpoint.onnx"
+matcher_weight_path: "/home/lhk/catkin_ws/src/SuperVINS/vins_estimator/weights_dpl/superpoint_lightglue_fused_cpu.onnx" 
+to
+pose_graph_save_path: "you output path"
+extractor_weight_path: "your superpoint.onnx path"
+matcher_weight_path: "your superpoint_lightglue_fused_cpu.onnx path" 
+```
+
+### 4.4 编译项目
+
+```bash
+cd ~/catkin_ws
+catkin_make
+```
+
+### 4.5 运行项目
+
+```bash
+roslaunch supervins supervins_rviz.launch
+rosrun supervins supervins_node ~/catkin_ws/src/SuperVINS/config/euroc/euroc_mono_imu_config.yaml
+rosrun supervins_loop_fusion supervins_loop_fusion_node ~/catkin_ws/src/SuperVINS/config/euroc/euroc_mono_imu_config.yaml
+rosbag play ~/data/EuRoC/MH_01_easy.bag
+```
+
+If Python is installed on your computer, you can directly use the python script to run it with one click
+
+```bash
+cd ~/catkin_ws/src/SuperVINS
+python run.py
+```
