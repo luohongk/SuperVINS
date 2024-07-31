@@ -13,11 +13,14 @@
 
 <div align=center><img src="resources\SuperVINS.png" width =100%></div>
 
-# 1 简要介绍
+# Notice
+<div align=center><img src="resources\about_code.png" width =100%></div>
 
-本项目是基于VINS-Fusion进行改进，[VINS-Fusion](https://github.com/HKUST-Aerial-Robotics/VINS-Fusion)是一个著名的SLAM框架。原版本的VINS-Fusion前端采用的是传统几何特征点然后进行光流追踪，本项目使用特征点法，引入了SuperPoint特征点与特征描述符，使用LightGlue网络进行特征匹配。在回环部分，原版的VINS-Fusion提取brief描述符，采用DBoW2进行回环检测，本项目使用DBoW3与SuperPoint深度学习描述符进行回环检测。打造了一个基于深度学习的SLAM系统。
+# 1 Brief Introduction
 
-# 2 构建项目
+This project is improved based on VINS-Fusion. [VINS-Fusion](https://github.com/HKUST-Aerial-Robotics/VINS-Fusion) is a well-known SLAM framework. The original version of VINS-Fusion front-end uses traditional geometric feature points and then performs optical flow tracking. This project uses the feature point method, introduces SuperPoint feature points and feature descriptors, and uses the LightGlue network for feature matching. In the loopback part, the original VINS-Fusion extracts the brief descriptor and uses DBoW2 for loopback detection. This project uses DBoW3 and SuperPoint deep learning descriptors for loopback detection. Created a SLAM system based on deep learning.
+
+# 2 Build Project
 
 ### 2.1 **Ubuntu** and **ROS**
 
@@ -51,7 +54,7 @@ make -j4
 make install
 ```
 
-# 3 创建ROS1工作区
+# 3 Create a ROS1 workspace
 
 ```bash
 mkdir -p ~/catkin_ws/src
@@ -63,16 +66,16 @@ echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bash
 source ~/.bashrc
 ```
 
-# 4 如何运行？
+# 4 How does it work?
 
-### 4.1 克隆项目
+### 4.1 Clone project
 
 ```bash
   cd ~/catkin_ws/src
   git clone https://github.com/luohongk/SuperVINS.git
 ```
 
-### 4.2 数据下载
+### 4.2 Data download
 
 You can download the specified data set yourself, or you can use download_data.sh to download the data set. The download method is as follows.
 
@@ -82,7 +85,7 @@ chmod +x download_data.sh
 ./download_data.sh
 ```
 
-### 4.3 路径更改
+### 4.3 Path change
 
 Absolute paths are used in some places in the project. You need to simply change the path configuration according to your own computer path. The change method is as follows
 
@@ -121,14 +124,14 @@ extractor_weight_path: "your superpoint.onnx path"
 matcher_weight_path: "your superpoint_lightglue_fused_cpu.onnx path" 
 ```
 
-### 4.4 编译项目
+### 4.4 Compile project
 
 ```bash
 cd ~/catkin_ws
 catkin_make
 ```
 
-### 4.5 运行项目
+### 4.5 Run the project
 
 ```bash
 roslaunch supervins supervins_rviz.launch
