@@ -16,6 +16,11 @@
 # Notice
 <div align=center><img src="resources\about_code.png" width =100%></div>
 
+# News
+- 2024.8.7:add demo video,add training DBoW3.
+- 2024.7.31:Publish a preprint(Journal in submission).[Preprint](https://arxiv.org/abs/2407.21348): https://arxiv.org/abs/2407.21348
+
+
 # Demo
 ### GIF
 <div align=center><img src="resources\SuperVINS_demo.gif" width =100%></div>
