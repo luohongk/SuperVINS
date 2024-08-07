@@ -16,11 +16,11 @@
 # Notice
 <div align=center><img src="resources\about_code.png" width =100%></div>
 
-# demo
-## GIF
+# Demo
+### GIF
 <div align=center><img src="resources\SuperVINS_demo.gif" width =100%></div>
 
-## Video
+### Video
 If you want to watch the full demo video, please click the [link](resources\video.mp4)
 
 # 1 Brief Introduction
