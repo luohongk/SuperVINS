@@ -21,7 +21,7 @@
 <div align=center><img src="resources\SuperVINS_demo.gif" width =100%></div>
 
 ### Video
-If you want to watch the full demo video, please click the [link](resources\video.mp4)
+If you want to watch the full demo video, please click the [link](resources/video.mp4)
 
 # 1 Brief Introduction
 
