@@ -7,7 +7,7 @@
  * Hongkun Luo
 -->
 
-# SuperVINS:SuperVINS: A visual-inertial SLAM framework integrated deep learning features
+# SuperVINS: A visual-inertial SLAM framework integrated deep learning features
 
 ![Static Badge](https://img.shields.io/badge/VINS-Image_IMU-red) ![Static Badge](https://img.shields.io/badge/Cpp-11-blue) ![Static Badge](https://img.shields.io/badge/DeepLearning-SuperPoint_LightGlue-red) ![Static Badge](https://img.shields.io/badge/ROS1-melodic-blue) ![Static Badge](https://img.shields.io/badge/BoW-DBoW3-red) ![Static Badge](https://img.shields.io/badge/WHU-BRAIN_LAB-red) ![Static Badge](https://img.shields.io/badge/luohongk-blue) ![Static Badge](https://img.shields.io/badge/Wuhan-China-green)
 
@@ -153,3 +153,6 @@ If Python is installed on your computer, you can directly use the python script 
 cd ~/catkin_ws/src/SuperVINS
 python run.py
 ```
+
+# 5 Training DBoW3’s SuperPoint bag of words
+[link](https://github.com/luohongk/SuperVINS/)
