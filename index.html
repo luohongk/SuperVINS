@@ -19,6 +19,17 @@
       width: 100%;
       margin: 10px 0;
     }
+    .image-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+    .image-container img {
+            max-width: 45%;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
   </style>
   
 </head>
@@ -28,50 +39,41 @@
     <h1><strong>SuperVINS: A Robust Real-Time Visual-Inertial SLAM Framework for Challenging Imaging Conditions</strong>
     </h1>
     <p id="authors">
-      <span class="conference">ICLR 2024</span> <br>
+      <span class="conference">IEEE Journal in submission</span> <br>
       <span>
-        <a href="https://hpwang-whu.github.io/">Haiping Wang<sup>1,*</sup></a>
+        <a href="http://luohongkun.com/">Hongkun Luo<sup>1,*</sup></a>
       </span>
       <span>
-        <a href="https://liuyuan-pal.github.io/">Yuan Liu<sup>2,*</sup></a>
+        <a href="https://jszy.whu.edu.cn/guochi">Chi Guo<sup>*</sup></a>
       </span>
       <span>
-        <a href="https://www.polyu.edu.hk/aae/people/academic-staff/dr-wang-bing/">Bing Wang<sup>3</sup></a>
+        <a href="">Yang Liu<sup>2</sup></a>
       </span>
       <span>
-        <a href="https://yujingsun.github.io/">Yujing Sun<sup>2</sup></a>
-      </span>
-      <br>
-      <span>
-        <a href="https://dongzhenwhu.github.io/index.html">Zhen Dong&dagger;<sup>1</sup></a>
-      </span>
-      <span>
-        <a href="https://www.cs.hku.hk/people/academic-staff/wenping">Wenping Wang<sup>2</sup></a>
-      </span>
-      <span>
-        <a href="https://3s.whu.edu.cn/info/1025/1415.htm">Bisheng Yang<sup>1,&dagger;</sup></a>
+        <a href="https://cesi.cumt.edu.cn/info/1101/8625.htm">Zengke Li<sup>3</sup></a>
       </span>
       <br>
       <span class="institution">
         <a href="https://en.whu.edu.cn/"><sup>1</sup> Wuhan University</a> 
-        <a href="https://www.hku.hk/"><sup>2</sup> The University of Hong Kong</a> <br>
-        <a href="https://www.polyu.edu.hk/"><sup>3</sup> The Hong Kong Polytechnic University</a> 
-        <a href="https://www.tamu.edu/index.html"><sup>4</sup> Texas A&M University</a></span>  
-        <sup>*</sup>The first two authors contribute equally. &nbsp;&nbsp; 
-        <sup>&dagger;</sup>Corresponding authors. &nbsp;&nbsp; 
+        <a href="https://www.cumt.edu.cn/"><sup>2</sup> China University of Mining and Technology</a> <br>
+        <sup>*</sup> represents the corresponding author. &nbsp;&nbsp; 
     </p>
+
     <font size="+2">
       <p style="text-align: center;">
-        <a href="https://arxiv.org/abs/2310.03420" target="_blank">[Paper]</a> &nbsp;&nbsp;&nbsp;&nbsp;
-        <a href="https://github.com/WHU-USI3DV/FreeReg" target="_blank">[Code]</a>&nbsp;&nbsp;&nbsp;&nbsp;
-        <a href="SuperVINS/bibtex.txt" target="_blank">[BibTeX]</a>
+        <a href="https://arxiv.org/abs/2407.21348" target="_blank">[Paper]</a> &nbsp;&nbsp;&nbsp;&nbsp;
+        <a href="https://github.com/luohongk/SuperVINS" target="_blank">[Code]</a>&nbsp;&nbsp;&nbsp;&nbsp;
+        <!-- <a href="SuperVINS/bibtex.txt" target="_blank">[BibTeX]</a> -->
       </p>
     </font>
     
     <h3>
-      <center>What can SuperVINS do?</center>
+      <center>SuperVINS framework</center>
     </h3>
-    <img src="./SuperVINS/teaser.png" class="teaser-gif" style="width:100%;"><br>
+    <div class="image-container">
+      <img src="./image/SuperVINS.png" alt="SuperVINS framework">
+      <img src="./image/abstract.png" alt="Real-time test of feature extraction and matching in SuperVINS">
+    </div>
     <a style="text-align:center">
       SuperVINS is a visual-inertial SLAM framework that <strong> integrates deep learning features</strong> based on VINS-Fusion. It has the characteristics of high accuracy and high robustness.</a>
   
@@ -87,25 +89,12 @@
   </div>
   <script>
     // pre-list all the image files under gif_cropped folder
-    var allFiles = ["sun3d-hotel_uc-scan3-0-10.gif",
-    "scene0477_01-16-19.gif",
-    "scene0025_01-2-3.gif",
-    "scene0335_02-0-4.gif",
-    "sun3d-hotel_umd-maryland_hotel3-24-28.gif",
-    "scene0642_02-6-7.gif",
-    "scene0025_01-20-24.gif",
-    "scene0223_00-11-12.gif",
-    "scene0694_00-0-4.gif",
-    "sun3d-mit_76_studyroom-76-1studyroom2-47-48.gif",
-    "sun3d-mit_76_studyroom-76-1studyroom2-29-31.gif",
-    "sun3d-mit_76_studyroom-76-1studyroom2-25-33.gif",
-    "sun3d-mit_76_studyroom-76-1studyroom2-61-62.gif",
-    "scene0265_02-17-28.gif","scene0146_02-8-12.gif",
-    "scene0309_00-2-3.gif",
-    "scene0334_02-0-1.gif",
-    "sun3d-hotel_uc-scan3-15-23.gif",
-    "scene0457_01-5-9.gif",
-    "sun3d-home_md-home_md_scan9_2012_sep_30-46-47.gif"];
+    var allFiles = [
+    "mh01.gif",
+    "mh05.gif",
+    "v201.gif",
+    "SuperVINS_demo.gif",
+  ];
 
     var page = 0; // current page
 
@@ -127,8 +116,8 @@
       var selectedFiles = shuffledFiles.slice(page * 10, (page + 1) * 10);
 
       // construct a html string to show these images
-      var htmlStr = '<h3><center>Patch warping based on FreeReg correspondences</center></h3> \
-      <p>Based on the estimated FreeReg correspondences, we warp local RGB patches to their estimated corresponding positions in the point cloud. \
+      var htmlStr = '<h3><center>Visualization results of SuperVINS experiments on EuRoC dataset: MH01, MH05, V201, and V202</center></h3> \
+      <p>This experiment is conducted on the Ubuntu 20.04 operating system,utilizing a GeForce RTX 2060 graphics card with NVIDIA driver version 530.41.03,and ROS neotic.Additionally,the system is configured with CUDA 11.7,CUDNN 8.9.6,and ONNX Runtime 1.16.3 to enable inference of deep learning models.To demonstrate the advantages of the improved algorithm,we employ the well-known public EuRoC dataset for our experiments.The system uses a re-trained deep learning-based Bag-of-Words model.To ensure comprehensive coverage of various scenarios,we expand the training dataset to include a hybrid set comprising the EuRoC,TUM,and KITTI datasets.  \
       Click left/right arrow or navigate dots to view more results. </p><table>';
       for (var i = 0; i < selectedFiles.length; i += 2) {
         htmlStr += '<tr>';
@@ -192,52 +181,24 @@
   </div>
 
   <div class="content">
-    <h2>Introduction</h2>
+    <h2>Experimental Results</h2>
     <!-- <video width="100%" controls autoplay control src="freereg/freereg.mp4" ></video> -->
     <div class="text-center">
-      <div style="position:relative;padding-top:56.25%;">
-          <!-- <iframe width="560" height="315" src="https://youtu.be/N_M5Zsfo1U8?si=8JAGXhyTWf-ZAdVl" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;"></iframe> -->
-          <iframe width="560" height="315" src="https://www.youtube.com/embed/N_M5Zsfo1U8?si=-b66sWZ9aBPNwWsM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;"></iframe>></iframe>
-        </div>
+      <div style="text-align: center;">
+        <img src="./image/guiji1.png" alt="Image 1" style="width: 80%; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;">
+        <img src="./image/guiji2.png" alt="Image 2" style="width: 80%; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;">
+        <img src="./image/guiji3.png" alt="Image 3" style="width: 80%; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;">
+      </div>
     </div>
-  </div>
-
-
-  <div class="content">
-    <h2>Zero-shot registration results</h2>
-    <h3>
-      <center>Compare to baseline method</center>
-    </h3>
-    <img class="summary-img" src="./freereg/compare_result.png" style="width:100%;">
-    <a>
-      <strong>(a)</strong> Input RGB images and point clouds for registration. 
-      <strong>(b)</strong> Estimated correspondences from the baseline method I2P-Matr. <br>
-      <strong>(c-e)</strong> Estimated correspondences by nearest neighborhood (NN) matcher utilizing Diffusion (FreeReg-D) / Geometric (FreeReg-G) / Fused features (FreeReg).
-    </a>
-    <br><br>
-
-    <h3>
-      <center>Visualization of feature maps and established correspondences</center>
-    </h3>
-    <img class="summary-img" src="./freereg/feat_match-0.png" style="width:100%;">
-    <img class="summary-img" src="./freereg/feat_match-1.png" style="width:100%;">
-    <img class="summary-img" src="./freereg/feat_match-2.png" style="width:100%;">
-    <a>
-      <strong>(a)</strong> Input RGB images and point clouds for registration. 
-      <strong>(b)</strong> The ground truth RGB images corresponding to the point clouds, solely intended for the readers' visualization
-      of the overlapping regions. 
-      <strong>(c-e)</strong> Diffusion / Geometric / Fused Feature maps of the input RGB images and point clouds. 
-      <strong>(g)</strong> Estimated correspondences from FreeReg.
-      </a>
   </div>
 
   <div class="content">
     <h2>BibTex</h2>
-    <code> @article{wang2023freereg,<br>
-  &nbsp;&nbsp;title={FreeReg: Image-to-Point Cloud Registration Leveraging Pretrained Diffusion Models and Monocular Depth Estimators},<br>
-  &nbsp;&nbsp;author={Haiping Wang and Yuan Liu and Bing Wang and Yujing Sun and Zhen Dong and Wenping Wang and Bisheng Yang},<br>
-  &nbsp;&nbsp;journal={arXiv preprint arXiv:2310.03420},<br>
-  &nbsp;&nbsp;year={2023}<br>
+    <code> @article{supervins,<br>
+  &nbsp;&nbsp;title={SuperVINS: A visual-inertial SLAM framework integrated deep learning features},<br>
+  &nbsp;&nbsp;author={Hongkun Luo and Chi Guo and Yang Liu and Zengke Li},<br>
+  &nbsp;&nbsp;journal={arXiv preprint arXiv:2407.21348},<br>
+  &nbsp;&nbsp;year={2024}<br>
   } </code>
   </div>
   <div class="content" id="acknowledgements">
