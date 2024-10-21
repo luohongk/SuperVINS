@@ -1,0 +1,6 @@
+@article{wang2023freereg,
+  title={FreeReg: Image-to-Point Cloud Registration Leveraging Pretrained Diffusion Models and Monocular Depth Estimators},
+  author={Haiping Wang and Yuan Liu and Bing Wang and Yujing Sun and Zhen Dong and Wenping Wang and Bisheng Yang},
+  journal={arXiv preprint arXiv:2310.03420},
+  year={2023}
+}

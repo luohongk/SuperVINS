@@ -1,0 +1,260 @@
+<html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>FreeReg: Image-to-Point Cloud Registration Leveraging Pretrained Diffusion Models and Monocular Depth Estimators</title>
+  <link href="./freereg/style.css" rel="stylesheet">
+  <script type="text/javascript" src="./freereg/jquery.mlens-1.0.min.js"></script>
+  <script type="text/javascript" src="./freereg/jquery.js"></script>
+  <style>
+    .divider {
+      border-right: 2px dashed #737373;
+      width: 2px;
+    }
+  </style>
+  <style>
+    .divider_horizontal {
+      border-top: 2px dashed #737373;
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+    }
+  </style>
+  
+</head>
+
+<body>
+  <div class="content">
+    <h1><strong>FreeReg: Image-to-Point Cloud Registration Leveraging Pretrained Diffusion Models and Monocular Depth Estimators</strong>
+    </h1>
+    <p id="authors">
+      <span class="conference">ICLR 2024</span> <br>
+      <span>
+        <a href="https://hpwang-whu.github.io/">Haiping Wang<sup>1,*</sup></a>
+      </span>
+      <span>
+        <a href="https://liuyuan-pal.github.io/">Yuan Liu<sup>2,*</sup></a>
+      </span>
+      <span>
+        <a href="https://www.polyu.edu.hk/aae/people/academic-staff/dr-wang-bing/">Bing Wang<sup>3</sup></a>
+      </span>
+      <span>
+        <a href="https://yujingsun.github.io/">Yujing Sun<sup>2</sup></a>
+      </span>
+      <br>
+      <span>
+        <a href="https://dongzhenwhu.github.io/index.html">Zhen Dong&dagger;<sup>1</sup></a>
+      </span>
+      <span>
+        <a href="https://www.cs.hku.hk/people/academic-staff/wenping">Wenping Wang<sup>2</sup></a>
+      </span>
+      <span>
+        <a href="https://3s.whu.edu.cn/info/1025/1415.htm">Bisheng Yang<sup>1,&dagger;</sup></a>
+      </span>
+      <br>
+      <span class="institution">
+        <a href="https://en.whu.edu.cn/"><sup>1</sup> Wuhan University</a> 
+        <a href="https://www.hku.hk/"><sup>2</sup> The University of Hong Kong</a> <br>
+        <a href="https://www.polyu.edu.hk/"><sup>3</sup> The Hong Kong Polytechnic University</a> 
+        <a href="https://www.tamu.edu/index.html"><sup>4</sup> Texas A&M University</a></span>  
+        <sup>*</sup>The first two authors contribute equally. &nbsp;&nbsp; 
+        <sup>&dagger;</sup>Corresponding authors. &nbsp;&nbsp; 
+    </p>
+    <font size="+2">
+      <p style="text-align: center;">
+        <a href="https://arxiv.org/abs/2310.03420" target="_blank">[Paper]</a> &nbsp;&nbsp;&nbsp;&nbsp;
+        <!-- <a href="freereg/Appendix.pdf" target="_blank">[Supp.]</a>&nbsp;&nbsp;&nbsp;&nbsp; -->
+        <a href="https://github.com/WHU-USI3DV/FreeReg" target="_blank">[Code]</a>&nbsp;&nbsp;&nbsp;&nbsp;
+        <a href="freereg/bibtex.txt" target="_blank">[BibTeX]</a>
+      </p>
+    </font>
+    
+    <h3>
+      <center>What can FreeReg do?</center>
+    </h3>
+    <img src="./freereg/teaser.png" class="teaser-gif" style="width:100%;"><br>
+    <a style="text-align:center">
+      FreeReg, <strong>without any task-specific training or fine-tuning</strong>, is able to register (a) 2D RGB images with 3D point clouds of both indoor and outdoor scenes. 
+      The key idea of FreeReg is to extract cross-modality diffusion and geometric features by utilizing pretrained diffusion models and monocular depth estimators as shown in (b), 
+      which enables reliable pixel-to-point correspondence estimation (c) even in challenging cases with small overlaps, large viewpoint changes, and sparse point density (d).</a>
+  
+    <div id="contentWrapper">
+      <button id="prevButton" onclick="prevPage()">&#8249;</button>
+      <div id="gif-display"></div>
+      <button id="nextButton" onclick="nextPage()">&#8250;</button>
+    </div>
+    <div id="navBar">
+      <div class="navDot" id="dot0" onclick="goToPage(0)"></div>
+      <div class="navDot" id="dot1" onclick="goToPage(1)"></div>
+    </div>
+  </div>
+  <script>
+    // pre-list all the image files under gif_cropped folder
+    var allFiles = ["sun3d-hotel_uc-scan3-0-10.gif",
+    "scene0477_01-16-19.gif",
+    "scene0025_01-2-3.gif",
+    "scene0335_02-0-4.gif",
+    "sun3d-hotel_umd-maryland_hotel3-24-28.gif",
+    "scene0642_02-6-7.gif",
+    "scene0025_01-20-24.gif",
+    "scene0223_00-11-12.gif",
+    "scene0694_00-0-4.gif",
+    "sun3d-mit_76_studyroom-76-1studyroom2-47-48.gif",
+    "sun3d-mit_76_studyroom-76-1studyroom2-29-31.gif",
+    "sun3d-mit_76_studyroom-76-1studyroom2-25-33.gif",
+    "sun3d-mit_76_studyroom-76-1studyroom2-61-62.gif",
+    "scene0265_02-17-28.gif","scene0146_02-8-12.gif",
+    "scene0309_00-2-3.gif",
+    "scene0334_02-0-1.gif",
+    "sun3d-hotel_uc-scan3-15-23.gif",
+    "scene0457_01-5-9.gif",
+    "sun3d-home_md-home_md_scan9_2012_sep_30-46-47.gif"];
+
+    var page = 0; // current page
+
+    function goToPage(p) {
+      page = p;
+      showPage();
+    }
+    // Create a copy of the allFiles array
+    var shuffledFiles = allFiles.slice();
+
+    // Fisher-Yates Shuffle
+    for (let i = shuffledFiles.length - 1; i > 0; i--) {
+      let j = Math.floor(Math.random() * (i + 1)); // random index from 0 to i
+
+      // swap elements i and j
+      [shuffledFiles[i], shuffledFiles[j]] = [shuffledFiles[j], shuffledFiles[i]];
+    }
+    function showPage() {
+      var selectedFiles = shuffledFiles.slice(page * 10, (page + 1) * 10);
+
+      // construct a html string to show these images
+      var htmlStr = '<h3><center>Patch warping based on FreeReg correspondences</center></h3> \
+      <p>Based on the estimated FreeReg correspondences, we warp local RGB patches to their estimated corresponding positions in the point cloud. \
+      Click left/right arrow or navigate dots to view more results. </p><table>';
+      for (var i = 0; i < selectedFiles.length; i += 2) {
+        htmlStr += '<tr>';
+        for (var j = 0; j < 2; j++) {
+          if (i + j < selectedFiles.length) {
+            var file = selectedFiles[i + j];
+            htmlStr += '<td><img class="summary-img" src="./gif_cropped/' + file + '" style="width:100%;"></td>';
+            if (j == 0 && i + j + 1 < selectedFiles.length) {
+              // add a divider (dash line)
+              htmlStr += '<td class="divider"></td>';
+            }
+          }
+        }
+        htmlStr += '</tr>';
+      }
+      htmlStr += '</table>';
+      // add these images to a div with id 'content'
+      document.getElementById('gif-display').innerHTML = htmlStr;
+
+      // update navigation dots
+      for (var i = 0; i < 2; i++) {
+        var dot = document.getElementById('dot' + i);
+        if (i == page) {
+          dot.classList.add('navDotSelected');
+        } else {
+          dot.classList.remove('navDotSelected');
+        }
+      }
+    }
+
+    function prevPage() {
+      if (page > 0) {
+        page--;
+        // add these images to a div with id 'con
+        showPage();
+      }
+      else if (page == 0){
+      page= allFiles.length / 10 - 1;
+        showPage();
+      }
+    }
+
+    function nextPage() {
+      if (page < allFiles.length / 10 - 1) {
+        page++;
+        showPage();
+      }
+      else if (page == allFiles.length / 10 - 1) {
+      page=0;
+        showPage();
+      }
+    }
+
+    // Show the first page when the script is first run
+    showPage();
+  </script>
+
+  <div class="content">
+    <h2 style="text-align:center;">Abstract</h2>
+    <p>Matching cross-modality features between images and point clouds is a fundamental problem for image-to-point cloud registration.
+      However, due to the modality difference between images and points, it is difficult to learn robust and discriminative cross-modality features by existing metric learning methods for feature matching.
+      Instead of applying metric learning on cross-modality data, we propose to unify the modality between images and point clouds by pretrained large-scale models first, and then establish robust correspondence within the same modality. 
+      We show that the intermediate features, called diffusion features, extracted by depth-to-image diffusion models are semantically consistent between images and point clouds, which enables the building of coarse but robust cross-modality correspondences.
+      We further extract geometric features on depth maps produced by the monocular depth estimator. By matching such geometric features, we significantly improve the accuracy of the coarse correspondences produced by diffusion features.
+      Extensive experiments demonstrate that without any task-specific training, direct utilization of both features produces accurate image-to-point cloud registration. 
+      On three public indoor and outdoor benchmarks, the proposed method averagely achieves a 20.6% improvement in Inlier Ratio, a three-fold higher Inlier Number, and a 48.6% improvement in Registration Recall than existing state-of-the-arts. 
+      The codes are available in the supplementary material and will be released upon acceptance.</p>
+  </div>
+
+  <div class="content">
+    <h2>Introduction</h2>
+    <!-- <video width="100%" controls autoplay control src="freereg/freereg.mp4" ></video> -->
+    <div class="text-center">
+      <div style="position:relative;padding-top:56.25%;">
+          <!-- <iframe width="560" height="315" src="https://youtu.be/N_M5Zsfo1U8?si=8JAGXhyTWf-ZAdVl" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;"></iframe> -->
+          <iframe width="560" height="315" src="https://www.youtube.com/embed/N_M5Zsfo1U8?si=-b66sWZ9aBPNwWsM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;"></iframe>></iframe>
+        </div>
+    </div>
+  </div>
+
+
+  <div class="content">
+    <h2>Zero-shot registration results</h2>
+    <h3>
+      <center>Compare to baseline method</center>
+    </h3>
+    <img class="summary-img" src="./freereg/compare_result.png" style="width:100%;">
+    <a>
+      <strong>(a)</strong> Input RGB images and point clouds for registration. 
+      <strong>(b)</strong> Estimated correspondences from the baseline method I2P-Matr. <br>
+      <strong>(c-e)</strong> Estimated correspondences by nearest neighborhood (NN) matcher utilizing Diffusion (FreeReg-D) / Geometric (FreeReg-G) / Fused features (FreeReg).
+    </a>
+    <br><br>
+
+    <h3>
+      <center>Visualization of feature maps and established correspondences</center>
+    </h3>
+    <img class="summary-img" src="./freereg/feat_match-0.png" style="width:100%;">
+    <img class="summary-img" src="./freereg/feat_match-1.png" style="width:100%;">
+    <img class="summary-img" src="./freereg/feat_match-2.png" style="width:100%;">
+    <a>
+      <strong>(a)</strong> Input RGB images and point clouds for registration. 
+      <strong>(b)</strong> The ground truth RGB images corresponding to the point clouds, solely intended for the readers' visualization
+      of the overlapping regions. 
+      <strong>(c-e)</strong> Diffusion / Geometric / Fused Feature maps of the input RGB images and point clouds. 
+      <strong>(g)</strong> Estimated correspondences from FreeReg.
+      </a>
+  </div>
+
+  <div class="content">
+    <h2>BibTex</h2>
+    <code> @article{wang2023freereg,<br>
+  &nbsp;&nbsp;title={FreeReg: Image-to-Point Cloud Registration Leveraging Pretrained Diffusion Models and Monocular Depth Estimators},<br>
+  &nbsp;&nbsp;author={Haiping Wang and Yuan Liu and Bing Wang and Yujing Sun and Zhen Dong and Wenping Wang and Bisheng Yang},<br>
+  &nbsp;&nbsp;journal={arXiv preprint arXiv:2310.03420},<br>
+  &nbsp;&nbsp;year={2023}<br>
+  } </code>
+  </div>
+  <div class="content" id="acknowledgements">
+    <p><strong>Acknowledgements</strong>:
+      We borrow this template from <a href="https://sd-complements-dino.github.io/">A-tale-of-two-features</a>.
+    </p>
+  </div>
+</body>
+
+</html>
