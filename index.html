@@ -2,10 +2,10 @@
 
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <title>FreeReg: Image-to-Point Cloud Registration Leveraging Pretrained Diffusion Models and Monocular Depth Estimators</title>
-  <link href="./freereg/style.css" rel="stylesheet">
-  <script type="text/javascript" src="./freereg/jquery.mlens-1.0.min.js"></script>
-  <script type="text/javascript" src="./freereg/jquery.js"></script>
+  <title>SuperVINS: A Robust Real-Time Visual-Inertial SLAM Framework for Challenging Imaging Conditions</title>
+  <link href="./SuperVINS/style.css" rel="stylesheet">
+  <script type="text/javascript" src="./SuperVINS/jquery.mlens-1.0.min.js"></script>
+  <script type="text/javascript" src="./SuperVINS/jquery.js"></script>
   <style>
     .divider {
       border-right: 2px dashed #737373;
@@ -25,7 +25,7 @@
 
 <body>
   <div class="content">
-    <h1><strong>FreeReg: Image-to-Point Cloud Registration Leveraging Pretrained Diffusion Models and Monocular Depth Estimators</strong>
+    <h1><strong>SuperVINS: A Robust Real-Time Visual-Inertial SLAM Framework for Challenging Imaging Conditions</strong>
     </h1>
     <p id="authors">
       <span class="conference">ICLR 2024</span> <br>
@@ -63,20 +63,17 @@
     <font size="+2">
       <p style="text-align: center;">
         <a href="https://arxiv.org/abs/2310.03420" target="_blank">[Paper]</a> &nbsp;&nbsp;&nbsp;&nbsp;
-        <!-- <a href="freereg/Appendix.pdf" target="_blank">[Supp.]</a>&nbsp;&nbsp;&nbsp;&nbsp; -->
         <a href="https://github.com/WHU-USI3DV/FreeReg" target="_blank">[Code]</a>&nbsp;&nbsp;&nbsp;&nbsp;
-        <a href="freereg/bibtex.txt" target="_blank">[BibTeX]</a>
+        <a href="SuperVINS/bibtex.txt" target="_blank">[BibTeX]</a>
       </p>
     </font>
     
     <h3>
-      <center>What can FreeReg do?</center>
+      <center>What can SuperVINS do?</center>
     </h3>
-    <img src="./freereg/teaser.png" class="teaser-gif" style="width:100%;"><br>
+    <img src="./SuperVINS/teaser.png" class="teaser-gif" style="width:100%;"><br>
     <a style="text-align:center">
-      FreeReg, <strong>without any task-specific training or fine-tuning</strong>, is able to register (a) 2D RGB images with 3D point clouds of both indoor and outdoor scenes. 
-      The key idea of FreeReg is to extract cross-modality diffusion and geometric features by utilizing pretrained diffusion models and monocular depth estimators as shown in (b), 
-      which enables reliable pixel-to-point correspondence estimation (c) even in challenging cases with small overlaps, large viewpoint changes, and sparse point density (d).</a>
+      SuperVINS is a visual-inertial SLAM framework that <strong> integrates deep learning features</strong> based on VINS-Fusion. It has the characteristics of high accuracy and high robustness.</a>
   
     <div id="contentWrapper">
       <button id="prevButton" onclick="prevPage()">&#8249;</button>
@@ -191,14 +188,7 @@
 
   <div class="content">
     <h2 style="text-align:center;">Abstract</h2>
-    <p>Matching cross-modality features between images and point clouds is a fundamental problem for image-to-point cloud registration.
-      However, due to the modality difference between images and points, it is difficult to learn robust and discriminative cross-modality features by existing metric learning methods for feature matching.
-      Instead of applying metric learning on cross-modality data, we propose to unify the modality between images and point clouds by pretrained large-scale models first, and then establish robust correspondence within the same modality. 
-      We show that the intermediate features, called diffusion features, extracted by depth-to-image diffusion models are semantically consistent between images and point clouds, which enables the building of coarse but robust cross-modality correspondences.
-      We further extract geometric features on depth maps produced by the monocular depth estimator. By matching such geometric features, we significantly improve the accuracy of the coarse correspondences produced by diffusion features.
-      Extensive experiments demonstrate that without any task-specific training, direct utilization of both features produces accurate image-to-point cloud registration. 
-      On three public indoor and outdoor benchmarks, the proposed method averagely achieves a 20.6% improvement in Inlier Ratio, a three-fold higher Inlier Number, and a 48.6% improvement in Registration Recall than existing state-of-the-arts. 
-      The codes are available in the supplementary material and will be released upon acceptance.</p>
+    <p>There is an increasing emphasis on achieving high accuracy and robustness in SLAM systems. Traditional visual-inertial SLAM system often struggles with stability under low-light or motion-blur conditions, leading to potential lost of trajectory tracking. High accuracy and robustness are essential for the long-term and stable positioning capabilities of SLAM systems. Addressing the challenges of enhancing robustness and accuracy in visual-inertial SLAM, this paper propose SuperVINS, a real-time visual-inertial SLAM framework designed for for challenging imaging conditions. Developed as an enhancement of VINS-Fusion, SuperVINS integrates the deep learning neural network model SuperPoint for feature point extraction and loop closure detection. At the same time, a deep learning neural network LightGlue model for associating  feature points is integrated in front-end feature point matching. A feature points matching optimization strategy based on the RANSAC algorithm is proposed. The system is capable of dynamically adjusting thresholds in response to environmental changing, thereby balancing computational cost and positioning accuracy. Additionally, it allows for flexible training of specific SuperPoint bag of words tailored for loop closure detection in particular environments.The system enables real-time positioning and mapping without the need for preprocessing. Experimental validation on the well-known EuRoC dataset demonstrates that SuperVINS outperforms in accuracy and robustness across most challenging sequences. This paper analyzes the advantages of SuperVINS in terms of accuracy, real-time performance, and robustness.</p>
   </div>
 
   <div class="content">
