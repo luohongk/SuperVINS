@@ -34,14 +34,14 @@ This project is improved based on VINS-Fusion. [VINS-Fusion](https://github.com/
 
 ### 2.1 **Ubuntu** and **ROS**
 
-Ubuntu 64-bit 18.04.
-ROS Melodic. **[ROS Installation](http://wiki.ros.org/ROS/Installation)**
+Ubuntu 64-bit 20.04.
+ROS Noetic. **[ROS Installation](http://wiki.ros.org/ROS/Installation)**
 
 ### 2.2 **OpenCV**
 
-OpenCV3.2.0. **[OpenCV3.2.0](https://github.com/opencv/opencv/archive/refs/tags/3.2.0.zip)**
+OpenCV4.2.0. **[OpenCV4.2.0](https://github.com/opencv/opencv/archive/refs/tags/4.2.0.zip)**
 
-if you use Ubuntu 18.04, you can install it by:`sudo apt-get install libopencv-dev`
+if you use Ubuntu 20.04, you can install it by:`sudo apt-get install libopencv-dev`
 
 ### 2.3 **Ceres Solver**
 
