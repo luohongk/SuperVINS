@@ -21,7 +21,7 @@
 
 # <img src="./resources/icons/news.svg" style="height: 25px; vertical-align: middle; margin-right: 1px;"> News
 - 2024.10.6:add base code
-- 2024.8.7:add demo video,add training DBoW3.
+- 2024.8.7:add demo.
 - 2024.7.31:Publish a preprint(Journal in submission).[Preprint](https://arxiv.org/abs/2407.21348): https://arxiv.org/abs/2407.21348
 
 
