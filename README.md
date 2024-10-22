@@ -162,6 +162,3 @@ If Python is installed on your computer, you can directly use the python script 
 cd ~/catkin_ws/src/SuperVINS
 python run.py
 ```
-
-# <img src="./resources/icons/add_text.svg" style="height: 25px; vertical-align: middle; margin-right: 1px;">5 Training DBoW3’s SuperPoint bag of words
-[link](https://github.com/luohongk/SuperVINS/)
