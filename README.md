@@ -9,6 +9,12 @@
 
 # SuperVINS: A Robust Real-Time Visual-Inertial SLAM Framework for Challenging Imaging Conditions
 
+<p>
+  <a href="https://arxiv.org/abs/2407.21348" class="styled-link">[PDF]</a>
+  <a href="https://github.com/luohongk/SuperVINS" class="styled-link">[Code]</a>
+  <a href="http://luohongkun.com/SuperVINS/" class="styled-link">[Pages]</a>
+</p>
+
 ![Static Badge](https://img.shields.io/badge/VINS-Image_IMU-red) ![Static Badge](https://img.shields.io/badge/Cpp-14-blue) ![Static Badge](https://img.shields.io/badge/DeepLearning-SuperPoint_LightGlue-red) ![Static Badge](https://img.shields.io/badge/ROS1-noetic-blue) ![Static Badge](https://img.shields.io/badge/BoW-DBoW3-red) ![Static Badge](https://img.shields.io/badge/WHU-BRAIN_LAB-red) ![Static Badge](https://img.shields.io/badge/luohongk-blue) ![Static Badge](https://img.shields.io/badge/Wuhan-China-green)
 
 <div align=center><img src="resources\SuperVINS.png" width =100%></div>
