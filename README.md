@@ -23,7 +23,6 @@
 
 <div align=center><img src="resources\SuperVINS.png" width =100%></div>
 
-
 # `<img src="./resources/icons/news.svg" style="height: 25px; vertical-align: middle; margin-right: 1px;">`News
 
 - 2025.3.7:add supervins1.0.
@@ -41,13 +40,13 @@
 
 If you want to watch the full demo video, please click the [link](resources/video.mp4)
 
-# `<img src="./resources/icons/text.svg" style="height: 25px; vertical-align: middle; margin-right: 1px;">` 1 Introduction
+# `<img src="./resources/icons/text.svg" style="height: 25px; vertical-align: middle; margin-right: 1px;">`1 Introduction
 
 This project is improved based on VINS-Fusion. [VINS-Fusion](https://github.com/HKUST-Aerial-Robotics/VINS-Fusion) is a well-known SLAM framework. The original version of VINS-Fusion front-end uses traditional geometric feature points and then performs optical flow tracking. This project uses the feature point method, introduces SuperPoint feature points and feature descriptors, and uses the LightGlue network for feature matching. In the loopback part, the original VINS-Fusion extracts the brief descriptor and uses DBoW2 for loopback detection. This project uses DBoW3 and SuperPoint deep learning descriptors for loopback detection. Created a SLAM system based on deep learning.
 
 Why is it called SuperVINS? We named this project in honor of SuperPoint and VINS-Fusion. In this project, "Super" does not mean "super and excellent", it just means that the SuperPoint descriptor runs through the front-end and loop closure detection. "VINS" means that this project uses the visual-inertial fusion algorithm, Meanwhile，it is also to thank VINS-Fusion for its outstanding contribution.
 
-# `<img src="./resources/icons/run.svg" style="height: 25px; vertical-align: middle; margin-right: 1px;">` 2 Build Project
+# `<img src="./resources/icons/run.svg" style="height: 25px; vertical-align: middle; margin-right: 1px;">`2 Build Project
 
 ### 2.1 **Ubuntu** and **ROS**
 
@@ -151,7 +150,6 @@ https://github.com/rmsalinas/DBow3
 # Thanks
 
 * [VINS-Fusion](https://github.com/HKUST-Aerial-Robotics/VINS-Fusion)，[SuperPoint](https://github.com/magicleap/SuperPointPretrainedNetwork)，[DBoW3](https://github.com/rmsalinas/DBow3)，[LightGlue-OnnxRunner](https://github.com/OroChippw/LightGlue-OnnxRunner)
-
 * I would like to thank the [Wuhan University BRAIN Lab](https://www.zhiyuteam.com/) for its strong support for this project. Please continue to pay attention to the [latest research](https://zhiyuteam.com/html/web//yanjiuchengguo/qikanlunwen/index.html) of the Wuhan University BRAIN Lab. Welcome to follow Wuhan University BRAIN Lab WeChat Official Account！
 
 <img src="./resources/BRAIN.png" style="height: 100px; ">
