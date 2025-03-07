@@ -21,9 +21,7 @@
 #include "utility/tic_toc.h"
 #include "utility/utility.h"
 #include "parameters.h"
-// #include "ThirdParty/DBoW/DBoW2.h"
 #include "ThirdParty/DVision/DVision.h"
-// #include "XFeat.h"
 
 #include <chrono>
 #include <iostream>
@@ -46,40 +44,6 @@ public:
 
 	DVision::BRIEF m_brief;
 };
-
-class XFeat
-{
-public:
-	XFeat(std::string &xfeatModelPath, std::string &matchingModelPath);
-	int detectAndCompute(const cv::Mat &image, cv::Mat &mkpts, cv::Mat &feats, cv::Mat &sc);
-	bool initOrtSession(const Ort::Env &env, Ort::Session &session, std::string &modelPath, int &gpuId);
-	int matchStar(const cv::Mat &mkpts0, const cv::Mat &feats0, const cv::Mat &sc0, const cv::Mat &mkpts1, const cv::Mat &feats1, cv::Mat &matches, cv::Mat &batch_indexes);
-
-	static cv::Mat warpCornersAndDrawMatches(const std::vector<cv::Point2f> &refPoints, const std::vector<cv::Point2f> &dstPoints,
-											 const cv::Mat &img1, const cv::Mat &img2);
-
-	const ORTCHAR_T *stringToOrtchar_t(std::string const &s);
-
-	~XFeat();
-
-	// gpu id
-	int gpuId_ = 0;
-
-	// onnxruntime
-	Ort::Env env_{nullptr};
-	Ort::Session xfeatSession_{nullptr};
-	Ort::Session matchingSession_{nullptr};
-	Ort::AllocatorWithDefaultOptions allocator;
-
-	//
-	std::vector<const char *> xfeatInputNames = {"images"};
-	std::vector<const char *> xfeatOutputNames = {"mkpts", "feats", "sc"};
-	std::vector<const char *> matchingInputNames = {"mkpts0", "feats0", "sc0", "mkpts1", "feats1"};
-	std::vector<const char *> matchingOutputNames = {"matches", "batch_indexes"};
-
-	bool initFinishedFlag_ = false;
-};
-
 class KeyFrame
 {
 public:
@@ -96,9 +60,6 @@ public:
 	bool findConnection(KeyFrame *old_kf);
 	void computeWindowBRIEFPoint();
 	void computeBRIEFPoint();
-
-	// new code
-	void computeXFeatPoint();
 
 	// void extractBrief();
 	int HammingDis(const BRIEF::bitset &a, const BRIEF::bitset &b);
@@ -148,23 +109,11 @@ public:
 	vector<double> point_id;
 	vector<cv::KeyPoint> keypoints;
 
-	// new code
-	cv::Mat XFeatKeypoints1000;
-	cv::Mat XFeatKeypoints4800;
-
 	vector<cv::KeyPoint> keypoints_norm;
-
-	// new code
-	cv::Mat XFeatKeypoints_norm1000;
-	cv::Mat XFeatKeypoints_norm4800;
 
 	vector<cv::KeyPoint> window_keypoints;
 
 	vector<BRIEF::bitset> brief_descriptors;
-
-	// new code
-	cv::Mat XFeatDescriptors1000;
-	cv::Mat XFeatDescriptors4800;
 
 	// new code
 	cv::Mat SuperPointDescriptors;

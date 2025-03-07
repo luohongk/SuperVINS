@@ -61,6 +61,8 @@ int ROW;
 int COL;
 int DEBUG_IMAGE;
 
+string LOOP_PROJECT_SOURCE_DIR;
+
 camodocal::CameraPtr m_camera;
 Eigen::Vector3d tic;
 Eigen::Matrix3d qic;
@@ -122,7 +124,6 @@ void image_callback(const sensor_msgs::ImageConstPtr &image_msg)
 
 void descriptors_callback(const sensor_msgs::ImageConstPtr &image_msg)
 {
-    // ROS_INFO("des_callback!");
     des_lock.lock();
     descriptors_buf.push(image_msg);
     des_lock.unlock();
@@ -373,16 +374,18 @@ void process()
                 }
 
                 // 根据时间戳寻找关键帧所对应的描述子
-                // des_lock.lock();
+                // Find the descriptor corresponding to the key frame based on the timestamp
                 if (!descriptors_buf.empty())
                 {
                     while (true)
                     {
                         // 获取 descriptors_buf 队列的长度
+                        // Get the length of descriptors_buf queue
                         size_t queue_size = descriptors_buf.size();
                         if (queue_size < 5)
                         {
                             // 等待一秒，直到 descriptors_buf 队列的长度大于等于5
+                            // Wait one second until the length of the descriptors_buf queue is greater than or equal to 5
                             std::this_thread::sleep_for(std::chrono::seconds(1));
                             continue;
                         }
@@ -391,26 +394,15 @@ void process()
 
                         // debug
                         // 找到了关键帧对应的描述子
-                        // ros::Time time3 = point_msg->header.stamp;
-
-                        // cout << std::fixed << std::setprecision(9) << time1 << std::endl;
-                        // cout << std::fixed << std::setprecision(9) << time2 << std::endl;
-                        // cout << std::fixed << std::setprecision(9) << time3 << std::endl;
-
+                        // Found the descriptor corresponding to the key frame
                         ros::Time time1 = descriptors_buf.front()->header.stamp;
                         ros::Time time2 = pose_msg->header.stamp;
 
                         if (time1 == time2)
                         {
                             // 拿到描述子
+                            // Get the descriptor
                             des_msg = descriptors_buf.front();
-                            // debug
-                            // cout << std::fixed << std::setprecision(9) << descriptors_buf.front()->header.stamp << std::endl;
-                            // 获取 descriptors_buf 队列的长度
-                            // debug
-                            // size_t queue_size = descriptors_buf.size();
-                            // cout << "descriptors_buf 队列的长度为：" << queue_size << endl;
-
                             des_lock.lock();
                             descriptors_buf.pop();
                             des_lock.unlock();
@@ -418,30 +410,12 @@ void process()
                         }
                         else
                         {
-                            // debug
-                            // cout << std::fixed << std::setprecision(9) << descriptors_buf.front()->header.stamp << std::endl;
-                            // size_t queue_size = descriptors_buf.size();
-                            // cout << "descriptors_buf 队列的长度为：" << queue_size << endl;
                             des_lock.lock();
                             descriptors_buf.pop();
                             des_lock.unlock();
                         }
                     }
                 }
-
-                // des_lock.unlock();
-                // debug
-                // ros::Time test_time1 = des_msg->header.stamp;
-                // ros::Time test_time2 = pose_msg->header.stamp;
-                // ros::Time test_time3 = point_msg->header.stamp;
-
-                /* --------------------------------- 观察三个时间戳 -------------------------------- */
-                // cout << "--------------------------------------------" << endl;
-                // debug
-                // cout << std::fixed << std::setprecision(9) << test_time1 << std::endl;
-                // cout << std::fixed << std::setprecision(9) << test_time2 << std::endl;
-                // cout << std::fixed << std::setprecision(9) << test_time3 << std::endl;
-
                 cv_bridge::CvImageConstPtr des_ptr;
                 if (des_msg->encoding == "8UC1")
                 {
@@ -461,19 +435,8 @@ void process()
                 }
 
                 // 描述子消息拿到了，接下来进行处理
+                // The description sub-message is obtained and will be processed next.
                 cv::Mat descriptors = des_ptr->image;
-
-                // debug
-                // cout << "描述子的行数：" << descriptors.rows << "描述子的列数：" << descriptors.cols << endl;
-
-                // debug
-                // std::cout << "开始初始化关键帧" << std::endl;
-
-                // debug
-                // 输出关键帧的时间戳与描述子信息
-                // std::cout << std::fixed << std::setprecision(9) << pose_msg->header.stamp << std::endl;
-
-                // cout << descriptors.rows << endl;
 
                 KeyFrame *keyframe = new KeyFrame(pose_msg->header.stamp.toSec(), frame_index, T, R, image,
                                                   point_3d, point_2d_uv, point_2d_normal, point_id, sequence, descriptors);
@@ -528,7 +491,7 @@ int main(int argc, char **argv)
     {
         printf("please intput: rosrun supervins_loop_fusion supervins_loop_fusion_node [config file] \n"
                "for example: rosrun supervins_loop_fusion supervins_loop_fusion_node "
-               "/home/tony-ws1/catkin_ws/src/VINS-Fusion/config/euroc/euroc_stereo_imu_config.yaml \n");
+               "/home/tony-ws1/catkin_ws/src/SuperVINS/config/euroc/euroc_stereo_imu_config.yaml \n");
         return 0;
     }
 
@@ -550,11 +513,18 @@ int main(int argc, char **argv)
     ROW = fsSettings["image_height"];
     COL = fsSettings["image_width"];
     std::string pkg_path = ros::package::getPath("supervins_loop_fusion");
-    // string vocabulary_file = pkg_path + "/../support_files/brief_k10L6.bin";
-    string vocabulary_file = "/home/lhk/catkin_ws/src/SuperVINS/supervins_loop_fusion/src/ThirdParty/Voc/superpoint1.yml.gz";
-    cout << "vocabulary_file" << vocabulary_file << endl;
 
-    // 此处加载训练好的词袋模型(此部分后续更新)
+    // 路径配置
+    // Path configuration
+    LOOP_PROJECT_SOURCE_DIR= PROJECT_SOURCE_DIR;
+    string voc_relative_path=fsSettings["voc_relative_path"];
+    
+    string vocabulary_file = LOOP_PROJECT_SOURCE_DIR + "/" + voc_relative_path;
+    cout << "vocabulary_file" << vocabulary_file << endl;
+    
+    // 此处加载训练好的词袋模型
+    // Load the trained bag-of-words model here
+    posegraph.loadVocabulary(vocabulary_file);
 
     BRIEF_PATTERN_FILE = pkg_path + "/../support_files/brief_pattern.yml";
     cout << "BRIEF_PATTERN_FILE" << BRIEF_PATTERN_FILE << endl;
@@ -569,7 +539,9 @@ int main(int argc, char **argv)
 
     fsSettings["image0_topic"] >> IMAGE_TOPIC;
     fsSettings["pose_graph_save_path"] >> POSE_GRAPH_SAVE_PATH;
+    POSE_GRAPH_SAVE_PATH=LOOP_PROJECT_SOURCE_DIR + "/" + POSE_GRAPH_SAVE_PATH;
     fsSettings["output_path"] >> VINS_RESULT_PATH;
+    VINS_RESULT_PATH=LOOP_PROJECT_SOURCE_DIR + "/" + VINS_RESULT_PATH;
     fsSettings["save_image"] >> DEBUG_IMAGE;
 
     LOAD_PREVIOUS_POSE_GRAPH = fsSettings["load_previous_pose_graph"];
@@ -603,7 +575,8 @@ int main(int argc, char **argv)
     ros::Subscriber sub_point = n.subscribe("/supervins_estimator/keyframe_point", 2000, point_callback);
     ros::Subscriber sub_margin_point = n.subscribe("/supervins_estimator/margin_cloud", 2000, margin_point_callback);
 
-    // new code
+    // 新增深度学习特征节点
+    // Added deep learning feature node
     ros::Subscriber sub_superpoint_descriptors = n.subscribe("/supervins_estimator/superpoint_descriptors", 2000, descriptors_callback);
 
     pub_match_img = n.advertise<sensor_msgs::Image>("match_image", 1000);

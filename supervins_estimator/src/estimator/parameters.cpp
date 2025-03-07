@@ -48,7 +48,12 @@ int FLOW_BACK;
 
 string extractor_weight_global_path;
 string matcher_weight_global_path;
+
+string extractor_weight_relative_path;
+string matcher_weight_relative_path;
+
 float MATCHER_THRESHOLD;
+double ransacReprojThreshold;
 
 template <typename T>
 T readParam(ros::NodeHandle &n, std::string name)
@@ -200,9 +205,10 @@ void readParameters(std::string config_file)
     }
 
     // new codes to read deep-learning parameters
-    fsSettings["extractor_weight_path"] >> extractor_weight_global_path;
-    fsSettings["matcher_weight_path"] >> matcher_weight_global_path;
+    fsSettings["extractor_weight_path"] >> extractor_weight_relative_path;
+    fsSettings["matcher_weight_path"] >> matcher_weight_relative_path;
     MATCHER_THRESHOLD = fsSettings["matche_score_threshold"];
+    ransacReprojThreshold= fsSettings["ransacReprojThreshold"];
 
     fsSettings.release();
 }

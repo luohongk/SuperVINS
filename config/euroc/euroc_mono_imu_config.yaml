@@ -8,16 +8,14 @@ num_of_cam: 1
 imu_topic: "/imu0"
 image0_topic: "/cam0/image_raw"
 image1_topic: "/cam1/image_raw"
-output_path: "/home/lhk/catkin_ws/src/VINS_SPLG_BOW/output"
 
 cam0_calib: "cam0_mei.yaml"
 cam1_calib: "cam1_mei.yaml"
 image_width: 752
 image_height: 480
-   
 
 # Extrinsic parameter between IMU and Camera.
-estimate_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
+estimate_extrinsic: 1   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
                         # 1  Have an initial guess about extrinsic parameters. We will optimize around your initial guess.
 
 body_T_cam0: !!opencv-matrix
@@ -33,8 +31,16 @@ body_T_cam0: !!opencv-matrix
 multiple_thread: 1
 
 #feature traker paprameters
-max_cnt: 150            # max feature number in feature tracking
-min_dist: 10          # min distance between two features 
+# max feature number in feature tracking
+max_cnt: 150
+
+# min distance between two features 
+min_dist: 10
+
+#matcher parameters
+matche_score_threshold: 0.7
+ransacReprojThreshold: 0.5
+
 freq: 10                # frequence (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequence will be same as raw image 
 F_threshold: 1.0        # ransac threshold (pixel)
 show_track: 1           # publish tracking image as topic
@@ -56,12 +62,17 @@ g_norm: 9.81007     # gravity magnitude
 estimate_td: 0                      # online estimate time offset between camera and imu
 td: 0.0                             # initial value of time offset. unit: s. readed image clock + td = real image clock (IMU clock)
 
+# Path to vio output results
+output_path: "SuperVINS/supervins_estimator/vio_output"
+
 #loop closure parameters
 load_previous_pose_graph: 0        # load and reuse previous pose graph; load from 'pose_graph_save_path'
-pose_graph_save_path: "/home/lhk/catkin_ws/src/SuperVINS/output" # save and load path
+pose_graph_save_path: "SuperVINS/supervins_estimator/vio_output" # save and load path
 save_image: 1                   # save image in pose graph for visualization prupose; you can close this function by setting 0 
 
 #deep learning feature points weights
-extractor_weight_path: "/home/lhk/catkin_ws/src/SuperVINS/supervins_estimator/weights_dpl/superpoint.onnx"
-matcher_weight_path: "/home/lhk/catkin_ws/src/SuperVINS/supervins_estimator/weights_dpl/superpoint_lightglue_fused_cpu.onnx" 
-matche_score_threshold: 0.4
+extractor_weight_path: "SuperVINS/supervins_estimator/weights_dpl/superpoint.onnx"
+matcher_weight_path: "SuperVINS/supervins_estimator/weights_dpl/superpoint_lightglue_fused_cpu.onnx" 
+
+# Bag of Words path
+voc_relative_path: "SuperVINS/supervins_loop_fusion/src/ThirdParty/Voc/superpoint1.yml.gz" 

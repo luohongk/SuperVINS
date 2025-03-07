@@ -94,7 +94,9 @@ enum NoiseOrder
 //new codes
 extern string extractor_weight_global_path; //path to load deep-learning feature extractor weight
 extern string matcher_weight_global_path; //path to load deep-learning feature matcher weight
-
+extern string extractor_weight_relative_path; //path to load deep-learning feature matcher weight
+extern string matcher_weight_relative_path; //path to load deep-learning feature matcher weight
+extern  double ransacReprojThreshold;
 extern float MATCHER_THRESHOLD;
 
 enum ExtractorType //deep-learning based feautre extractor type

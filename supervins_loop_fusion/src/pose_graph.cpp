@@ -58,6 +58,12 @@ void PoseGraph::setIMUFlag(bool _use_imu)
     }
 }
 
+void PoseGraph::loadVocabulary(std::string voc_path)
+{
+    dpl_voc = initVoc(voc_path);
+    dpl_db = initDb(dpl_voc);
+}
+
 Vocabulary PoseGraph::initVoc(std::string voc_path)
 {
     Vocabulary voc(voc_path);
@@ -100,7 +106,26 @@ void PoseGraph::addKeyFrame(KeyFrame *cur_kf, bool flag_detect_loop)
         TicToc tmp_t;
         // debug
         std::cout << "detect loop" << std::endl;
-        loop_index = detectLoop(cur_kf, cur_kf->index);
+           // 开始计时
+           auto start = std::chrono::high_resolution_clock::now();
+
+           loop_index = detectLoop(cur_kf, cur_kf->index);
+
+           // 结束计时
+           auto end = std::chrono::high_resolution_clock::now();
+           std::chrono::duration<double> duration = end - start; // 计算持续时间
+
+           // 输出时间到控制台
+           // std::cout << "Duration: " << duration.count() << " seconds" << std::endl;
+
+           // 打开文件进行保存（以追加模式打开）
+           std::ofstream outFile("time_consumption/loop_frame_detection.txt", std::ios::app);
+           if (outFile.is_open()) {
+               outFile << duration.count() << std::endl; // 写入执行时间
+               outFile.close(); // 关闭文件
+           } else {
+               std::cerr << "Unable to open file" << std::endl; // 错误处理
+           }
     }
     else
     {

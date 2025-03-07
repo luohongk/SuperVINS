@@ -3,7 +3,6 @@ project(supervins_loop_fusion)
 
 set(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CXX_FLAGS "-std=c++14")
-#-DEIGEN_USE_MKL_ALL")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g")
 
 find_package(catkin REQUIRED COMPONENTS
@@ -19,11 +18,7 @@ find_package(Ceres REQUIRED PATHS "/home/lhk/Thirdparty/Ceres")
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package(Eigen3)
 
-# 新加入的代码
-# --------------------------------------------------
 set(CMAKE_CXX_STANDARD 14)
-
-#onnxruntime providers
 option(onnxruntime_USE_CUDA "Build with CUDA support" OFF)
 option(onnxruntime_USE_TENSORRT "Build with TensorRT support" OFF)
 option(LIBPNG_ROOTDIR "libpng root dir")
@@ -36,19 +31,10 @@ link_directories("${ONNXRUNTIME_ROOTDIR}/lib")
 find_package(JPEG)
 find_package(PNG)
 find_package(OpenCV REQUIRED)
-# find_package(OpenCV  REQUIRED)
-# find_package(OpenCV 4 PATHS "/home/lhk/Thirdparty/opencv4.5.4")
-
-# INCLUDE_DIRECTORIES(
-# src/ThirdParty/DBoW3/src
-# src/ThirdParty/DBoW3/xfeat/include
-# )
 INCLUDE_DIRECTORIES(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/DBoW3/src/
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/ThirdParty/DBoW3/xfeat/include/
 )
 
-# file(GLOB XFEAT_SOURCE "src/ThirdParty/DBoW3/xfeat/include/*.cpp")
 file(GLOB DBOW3_SOURCE "src/ThirdParty/DBoW3/src/*.cpp" "src/ThirdParty/DBoW3/src/*.c")
 
 link_libraries(${OpenCV_LIBRARIES})
@@ -63,13 +49,6 @@ add_executable(supervins_loop_fusion_node
     src/pose_graph.cpp
     src/keyframe.cpp
     src/utility/CameraPoseVisualization.cpp
-    
-    # src/ThirdParty/DBoW/BowVector.cpp
-    # src/ThirdParty/DBoW/FBrief.cpp
-    # src/ThirdParty/DBoW/FeatureVector.cpp
-    # src/ThirdParty/DBoW/QueryResults.cpp
-    # src/ThirdParty/DBoW/ScoringObject.cpp
-
     src/ThirdParty/DBoW3/src/BowVector.cpp
     src/ThirdParty/DBoW3/src/Database.cpp
     src/ThirdParty/DBoW3/src/DescManip.cpp
@@ -77,12 +56,10 @@ add_executable(supervins_loop_fusion_node
     src/ThirdParty/DBoW3/src/QueryResults.cpp
     src/ThirdParty/DBoW3/src/ScoringObject.cpp
     src/ThirdParty/DBoW3/src/Vocabulary.cpp
-    
     src/ThirdParty/DUtils/Random.cpp
     src/ThirdParty/DUtils/Timestamp.cpp
     src/ThirdParty/DVision/BRIEF.cpp
     src/ThirdParty/VocabularyBinary.cpp
-
     src/ThirdParty/DBoW3/src/DBoW3.h
     src/ThirdParty/DBoW3/src/Vocabulary.h
     src/ThirdParty/DBoW3/src/BowVector.h
@@ -95,10 +72,10 @@ add_executable(supervins_loop_fusion_node
     src/ThirdParty/DBoW3/src/QueryResults.h
     src/ThirdParty/DBoW3/src/ScoringObject.h
     src/ThirdParty/DBoW3/src/timers.h
-    
-
-    ${XFEAT_SOURCE}
     ${DBOW3_SOURCE}
     )
-
+get_filename_component(PROJECT_SOURCE_DIR_ABS "${CMAKE_SOURCE_DIR}" ABSOLUTE)
+target_compile_definitions(supervins_loop_fusion_node PRIVATE PROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR_ABS}")
 target_link_libraries(supervins_loop_fusion_node ${catkin_LIBRARIES}  ${OpenCV_LIBS} ${CERES_LIBRARIES}  ${OpenCV_LIBRARIES} onnxruntime) 
+
+

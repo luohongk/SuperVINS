@@ -1,0 +1,67 @@
+%YAML:1.0
+
+#common parameters
+#support: 1 imu 1 cam; 1 imu 2 cam: 2 cam; 
+imu: 1         
+num_of_cam: 1  
+
+imu_topic: "/imu0/data"
+image0_topic: "/cam2/image_raw"
+image1_topic: "/cam2/image_raw"
+output_path: "/home/lhk/catkin_ws/src/VINS-Fusion_Noetic_OpenCV4/output_umavi"
+
+cam0_calib: "cam2_pinhole.yaml"
+cam1_calib: "cam2_pinhole.yaml"
+image_width: 752
+image_height: 480
+   
+
+# Extrinsic parameter between IMU and Camera.
+estimate_extrinsic: 1   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
+                        # 1  Have an initial guess about extrinsic parameters. We will optimize around your initial guess.
+# UMV—VI原版没动的
+body_T_cam0: !!opencv-matrix
+   rows: 4
+   cols: 4
+   dt: d
+   data: [-0.9996891001069981, -0.024321238097913023, 0.005493678607751144, 0.11425322792996404,0.024372821606514775, -0.9996575482196979, 0.009526376767667806, -0.013218431734117795,0.005260104010154635, 0.009657311466820284, 0.9999395319923278, -0.03159608818108305,0.0, 0.0, 0.0, 1.0]
+
+#Multiple thread support
+multiple_thread: 1
+
+#feature traker paprameters
+max_cnt: 150            # max feature number in feature tracking
+min_dist: 0.5   # min distance between two features 
+
+matche_score_threshold: 0.7
+ransacReprojThreshold: 0.5
+
+freq: 10                # frequence (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequence will be same as raw image 
+F_threshold: 1.0        # ransac threshold (pixel)
+show_track: 1           # publish tracking image as topic
+flow_back: 1            # perform forward and backward optical flow to improve feature tracking accuracy
+
+#optimization parameters
+max_solver_time: 0.04  # max solver itration time (ms), to guarantee real time
+max_num_iterations: 8   # max solver itrations, to guarantee real time
+keyframe_parallax: 10.0 # keyframe selection threshold (pixel)
+
+#imu parameters       The more accurate parameters you provide, the better performance
+acc_n: 0.0007970737515806496          # accelerometer measurement noise standard deviation. 
+gyr_n: 0.00046306229509090514         # gyroscope measurement noise standard deviation.     
+acc_w: 4.134509826460877e-06      # accelerometer bias random work noise standard deviation.  
+gyr_w: 9.798339194666108e-07       # gyroscope bias random work noise standard deviation.     
+g_norm: 9.805     # gravity magnitude
+
+#unsynchronization parameters
+estimate_td: 0                      # online estimate time offset between camera and imu
+td: 0.00534915928352496                            # initial value of time offset. unit: s. readed image clock + td = real image clock (IMU clock)
+
+#loop closure parameters
+load_previous_pose_graph: 0        # load and reuse previous pose graph; load from 'pose_graph_save_path'
+pose_graph_save_path: "/home/lhk/catkin_ws/src/VINS-Fusion_Noetic_OpenCV4/supervins_m2dgr_output" # save and load path
+save_image: 1                   # save image in pose graph for visualization prupose; you can close this function by setting 0 
+
+#deep learning feature points weights
+extractor_weight_path: "/home/lhk/catkin_ws/src/VINS-Fusion_Noetic_OpenCV4/supervins_estimator/weights_dpl/superpoint.onnx"
+matcher_weight_path: "/home/lhk/catkin_ws/src/VINS-Fusion_Noetic_OpenCV4/supervins_estimator/weights_dpl/superpoint_lightglue_fused_cpu.onnx" 

@@ -18,19 +18,12 @@ find_package(catkin REQUIRED COMPONENTS
     image_transport)
 
 find_package(OpenCV REQUIRED)
-
-# message(WARNING "OpenCV_VERSION: ${OpenCV_VERSION}")
-# set(Ceres_DIR "/home/lhk/Thirtyparty/Ceres")
 find_package(Ceres REQUIRED PATHS "/home/lhk/Thirdparty/Ceres")
-
-#lightglue
 set(ONNXRUNTIME_ROOTDIR "/home/lhk/Thirdparty/onnxruntime")
-# set(ONNXRUNTIME_LIB ${ONNXRUNTIME_ROOTDIR}/lib)
 include_directories("${ONNXRUNTIME_ROOTDIR}/include")
 link_directories("${ONNXRUNTIME_ROOTDIR}/lib")
-include_directories(${PROJECT_SOURCE_DIR}/featureTracker/ort_include/)
-#########
 
+include_directories(${PROJECT_SOURCE_DIR}/featureTracker/ort_include/)
 include_directories(${PROJECT_SOURCE_DIR}/src/estimator/)
 include_directories(${catkin_INCLUDE_DIRS} ${CERES_INCLUDE_DIRS})
 
@@ -66,7 +59,9 @@ add_library(supervins_lib
 target_link_libraries(supervins_lib ${catkin_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES} onnxruntime)
 
 
-add_executable(supervins_node src/rosNodeTest.cpp)
+get_filename_component(PROJECT_SOURCE_DIR_ABS "${CMAKE_SOURCE_DIR}" ABSOLUTE)
+add_executable(supervins_node src/supervins_main.cpp)
+target_compile_definitions(supervins_node PRIVATE PROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR_ABS}")
 target_link_libraries(supervins_node supervins_lib) 
 
 # add_executable(kitti_odom_test src/KITTIOdomTest.cpp )

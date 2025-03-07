@@ -167,21 +167,27 @@ void Estimator::changeSensorType(int use_imu, int use_stereo)
 void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1)
 {
     // 输入图像计数加1
+    // Input image count plus 1
     inputImageCnt++;
     // 准备好特征帧来接收特征追踪器返回的结果
+    // Prepare feature frames to receive results returned by the feature tracker
     map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> featureFrame;
     TicToc featureTrackerTime;
     // 右目图像缺失的话，就只追踪左目图像
+    // If the right eye image is missing, only the left eye image will be tracked.
     if (_img1.empty())
     {
-        // featureFrame = featureTracker.trackImage(t, _img);
-        featureFrame = featureTracker.trackImage_dpl(t, _img); // track image with deeplearning methods
+        // track image with deeplearning methods
+        featureFrame = featureTracker.trackImage_dpl(t, _img); 
 
         // 将描述子保存成为cv::Mat
+        // Save the descriptor as cv::mat
         vector<pair<cv::Point2f, vector<float>>> kptAndDescriptors = featureTracker.cur_dplpts_descriptors;
 
         std::cout << std::fixed << std::setprecision(9) << t << std::endl;
+
         // 先初始化描述子，cv::Mat形式
+        // First initialize the descriptor, in the form of cv::mat
         cv::Mat descriptors(kptAndDescriptors.size(), 256, CV_32FC1);
 
         for (int i = 0; i < kptAndDescriptors.size(); i++)
@@ -191,12 +197,11 @@ void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1)
                 descriptors.at<float>(i, j) = kptAndDescriptors[i].second[j];
             }
         }
-        
-        // cout << descriptors.rows << endl;
 
         pair<double, cv::Mat> superPointDescriptors = make_pair(t, descriptors);
 
         // 将描述子推送到缓冲区
+        // Push superpoint descriptor to buffer
         mSuperPointDescriptors.lock();
         SuperPointDescriptorsBuf.push(make_pair(t, descriptors));
         mSuperPointDescriptors.unlock();
@@ -204,7 +209,7 @@ void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1)
 
     else
     {
-        featureFrame = featureTracker.trackImage_dpl(t, _img, _img1); // track image with deeplearning methods
+        featureFrame = featureTracker.trackImage_dpl(t, _img, _img1); 
 
         // 如果是双目的话说，也是一样的处理，把数据推送到描述符缓冲区
         // 将描述子保存成为cv::Mat
@@ -230,14 +235,18 @@ void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1)
     if (SHOW_TRACK)
     {
         // featureTracker.trackImage里把特征点追踪效果图画好了，若要发布的话就发布
+        // The feature point tracking effect has been drawn in Feature tracker.track image. If you want to publish it, publish it.
         cv::Mat imgTrack = featureTracker.getTrackImage();
         pubTrackImage(imgTrack, t);
     }
 
     // 如果开启了多线程模式，processMeasurements()函数已经在一个独立的线程中运行了，所以只需要将新获取的特征追踪结果推入featureBuf即可
+    // If multi-threading mode is enabled, the process measurements() function is already running in a separate thread, so you only need to push the newly obtained feature tracking results into the feature buf.
     if (MULTIPLE_THREAD)
     {
-        if (inputImageCnt % 2 == 0) // XXX 估计器插入图像数目是偶数时才插入新图像帧，插入的是[时间戳,特征帧]，后面会用到
+        if (inputImageCnt % 2 == 0) 
+        // XXX 估计器插入图像数目是偶数时才插入新图像帧，插入的是[时间戳,特征帧]，后面会用到
+        // The XXX estimator inserts new image frames only when the number of inserted images is an even number. What is inserted is [timestamp, feature frame], which will be used later.
         {
             mBuf.lock();
             featureBuf.push(make_pair(t, featureFrame));
@@ -247,11 +256,15 @@ void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1)
     else
     {
         mBuf.lock();
-        featureBuf.push(make_pair(t, featureFrame)); // 插入的是[时间戳,特征帧]，后面会用到
+        // 插入的是[时间戳,特征帧]，后面会用到
+        // Insert [timestamp, feature frame], which will be used later.
+        featureBuf.push(make_pair(t, featureFrame)); 
         mBuf.unlock();
         TicToc processTime;
-        processMeasurements(); // 没开启多线程模式就要手动运行processMeasurements()
-        // printf("process time: %f\n", processTime.toc());
+
+        // 没开启多线程模式就要手动运行processMeasurements()
+        // If multi-threading mode is not enabled, process measurements() must be run manually.
+        processMeasurements();
     }
 }
 
@@ -391,7 +404,28 @@ void Estimator::processMeasurements()
                 }
             }
             mProcess.lock();                             // 上锁，防止其它线程改变内参、状态量等等
+            
+            // 开始计时
+            auto start = std::chrono::high_resolution_clock::now();
+
             processImage(feature.second, feature.first); // 入口函数，状态估计都在这函数里面开始进行了
+
+            // 结束计时
+            auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> duration = end - start; // 计算持续时间
+
+            // 输出时间到控制台
+            // std::cout << "Duration: " << duration.count() << " seconds" << std::endl;
+
+            // 打开文件进行保存（以追加模式打开）
+            std::ofstream outFile("time_consumption/backend_optimization.txt", std::ios::app);
+            if (outFile.is_open()) {
+                outFile << duration.count() <<std::endl; // 写入执行时间
+                outFile.close(); // 关闭文件
+            } else {
+                std::cerr << "Unable to open file" << std::endl; // 错误处理
+            }
+
             prevTime = curTime;
 
             printStatistics(*this, 0);
