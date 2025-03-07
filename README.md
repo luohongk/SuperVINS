@@ -17,20 +17,18 @@
   <a href="http://luohongkun.com/SuperVINS/" class="styled-link">[Pages]</a>
 </p>
 
-## The code is not yet fully open. The currently uploaded version in this repository is still in a basic stage and is being organized.
-
 ![Static Badge](https://img.shields.io/badge/VINS-Image_IMU-red) ![Static Badge](https://img.shields.io/badge/Cpp-14-blue) ![Static Badge](https://img.shields.io/badge/DeepLearning-SuperPoint_LightGlue-red) ![Static Badge](https://img.shields.io/badge/ROS1-noetic-blue) ![Static Badge](https://img.shields.io/badge/BoW-DBoW3-red) ![Static Badge](https://img.shields.io/badge/WHU-BRAIN_LAB-red) ![Static Badge](https://img.shields.io/badge/luohongk-blue) ![Static Badge](https://img.shields.io/badge/Wuhan-China-green)
 
 <div align=center><img src="resources\SuperVINS.png" width =100%></div>
 
-# `<img src="./resources/icons/news.svg" style="height: 25px; vertical-align: middle; margin-right: 1px;">`News
+# News
 
 - 2025.3.7:add supervins1.0.
 - 2024.10.6:add base code
 - 2024.8.7:add demo.
 - 2024.7.31:Publish a preprint(Journal in submission).[Preprint](https://arxiv.org/abs/2407.21348): https://arxiv.org/abs/2407.21348
 
-# `<img src="./resources/icons/video.svg" style="height: 25px; vertical-align: middle; margin-right: 1px;">`Demo
+# Demo
 
 ### GIF
 
@@ -40,13 +38,13 @@
 
 If you want to watch the full demo video, please click the [link](resources/video.mp4)
 
-# `<img src="./resources/icons/text.svg" style="height: 25px; vertical-align: middle; margin-right: 1px;">`1 Introduction
+# 1 Introduction
 
 This project is improved based on VINS-Fusion. [VINS-Fusion](https://github.com/HKUST-Aerial-Robotics/VINS-Fusion) is a well-known SLAM framework. The original version of VINS-Fusion front-end uses traditional geometric feature points and then performs optical flow tracking. This project uses the feature point method, introduces SuperPoint feature points and feature descriptors, and uses the LightGlue network for feature matching. In the loopback part, the original VINS-Fusion extracts the brief descriptor and uses DBoW2 for loopback detection. This project uses DBoW3 and SuperPoint deep learning descriptors for loopback detection. Created a SLAM system based on deep learning.
 
 Why is it called SuperVINS? We named this project in honor of SuperPoint and VINS-Fusion. In this project, "Super" does not mean "super and excellent", it just means that the SuperPoint descriptor runs through the front-end and loop closure detection. "VINS" means that this project uses the visual-inertial fusion algorithm, Meanwhile，it is also to thank VINS-Fusion for its outstanding contribution.
 
-# `<img src="./resources/icons/run.svg" style="height: 25px; vertical-align: middle; margin-right: 1px;">`2 Build Project
+# 2 Build Project
 
 ### 2.1 **Ubuntu** and **ROS**
 
@@ -80,7 +78,7 @@ make -j4
 make install
 ```
 
-# `<img src="./resources/icons/workspace.svg" style="height: 25px; vertical-align: middle; margin-right: 1px;">`3 Create a ROS1 workspace
+# 3 Create a ROS1 workspace
 
 ```bash
 mkdir -p ~/catkin_ws/src
