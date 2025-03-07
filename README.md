@@ -90,7 +90,7 @@ echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bash
 source ~/.bashrc
 ```
 
-# `<img src="./resources/icons/shunxu.svg" style="height: 25px; vertical-align: middle; margin-right: 1px;">`4 How does it work?
+# 4 How does it work?
 
 ### 4.1 Clone project
 
