@@ -23,7 +23,8 @@
 
 <div align=center><img src="resources\SuperVINS.png" width =100%></div>
 
-# `<img src="./resources/icons/news.svg" style="height: 25px; vertical-align: middle; margin-right: 1px;">` News
+
+# `<img src="./resources/icons/news.svg" style="height: 25px; vertical-align: middle; margin-right: 1px;">`News
 
 - 2025.3.7:add supervins1.0.
 - 2024.10.6:add base code
@@ -40,7 +41,7 @@
 
 If you want to watch the full demo video, please click the [link](resources/video.mp4)
 
-# `<img src="./resources/icons/text.svg" style="height: 25px; vertical-align: middle; margin-right: 1px;">`1 Introduction
+# `<img src="./resources/icons/text.svg" style="height: 25px; vertical-align: middle; margin-right: 1px;">` 1 Introduction
 
 This project is improved based on VINS-Fusion. [VINS-Fusion](https://github.com/HKUST-Aerial-Robotics/VINS-Fusion) is a well-known SLAM framework. The original version of VINS-Fusion front-end uses traditional geometric feature points and then performs optical flow tracking. This project uses the feature point method, introduces SuperPoint feature points and feature descriptors, and uses the LightGlue network for feature matching. In the loopback part, the original VINS-Fusion extracts the brief descriptor and uses DBoW2 for loopback detection. This project uses DBoW3 and SuperPoint deep learning descriptors for loopback detection. Created a SLAM system based on deep learning.
 
