@@ -7,14 +7,21 @@
  * Hongkun Luo
 -->
 
-# SuperVINS: A Real-Time Visual-Inertial SLAM Framework for Challenging Imaging Conditions
-
-### http://luohongkun.com/SuperVINS/
-
-<p>
-  <a href="https://arxiv.org/abs/2407.21348" class="styled-link">[PDF]</a>
-  <a href="https://github.com/luohongk/SuperVINS" class="styled-link">[Code]</a>
-  <a href="http://luohongkun.com/SuperVINS/" class="styled-link">[Pages]</a>
+ <h1 align="center">SuperVINS: A Real-Time Visual-Inertial SLAM Framework for Challenging Imaging Conditions</h1>
+  <h3 align="center">
+    <a href="https://luohongkun.com/">Hongkun Luo</a>, <a href="">Yang Liu</a>, <a href="https://jszy.whu.edu.cn/guochi">Chi Guo</a>, <a href="https://cesi.cumt.edu.cn/info/1101/8625.htm">Zengke Li</a>, <a href="https://gnsscenter.whu.edu.cn/info/1301/1081.htm">Weiwei Song</a>
+  </h3>
+  <p align="center">
+    <a href="https://luohongkun.com/SuperVINS/">Project Website</a> , <a href="https://ieeexplore.ieee.org/document/10949688">Paper (IEEE Sensors Journal)</a>
+  </p>
+  <p align="center">
+    <a href="https://github.com/luohongk/SuperVINS">
+      <img src="https://img.shields.io/badge/License-GPL3.0-yellow.svg" />
+    </a>
+    <a href="https://cmake.org/">
+      <img src="https://img.shields.io/badge/built%20with-Cmake-red.svg" />
+    </a>
+  </p>
 </p>
 
 ![Static Badge](https://img.shields.io/badge/VINS-Image_IMU-red) ![Static Badge](https://img.shields.io/badge/Cpp-14-blue) ![Static Badge](https://img.shields.io/badge/DeepLearning-SuperPoint_LightGlue-red) ![Static Badge](https://img.shields.io/badge/ROS1-noetic-blue) ![Static Badge](https://img.shields.io/badge/BoW-DBoW3-red) ![Static Badge](https://img.shields.io/badge/WHU-BRAIN_LAB-red) ![Static Badge](https://img.shields.io/badge/luohongk-blue) ![Static Badge](https://img.shields.io/badge/Wuhan-China-green)
@@ -23,10 +30,11 @@
 
 # News
 
-- 2025.3.7:add supervins1.0.
-- 2024.10.6:add base code
-- 2024.8.7:add demo.
-- 2024.7.31:Publish a preprint(Journal in submission).[Preprint](https://arxiv.org/abs/2407.21348): https://arxiv.org/abs/2407.21348
+- **March 2025**: Published in IEEE Sensors Journal.
+- **March 7, 2025**: Added SuperVINS 1.0.
+- **October 6, 2024**: Released base code.
+- **August 7, 2024**: Added demo.
+- **July 31, 2024**: Published preprint (Journal in submission). [View Preprint](https://arxiv.org/abs/2407.21348)
 
 # Demo
 
