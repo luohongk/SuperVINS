@@ -145,6 +145,18 @@ Please refer to the official repository of DBoW3 yourself. This project does not
 https://github.com/rmsalinas/DBow3
 ```
 
+### 4.7 Paper citation method
+
+```bash
+@article{luo2025supervins,
+  title={SuperVINS: A Real-Time Visual-Inertial SLAM Framework for Challenging Imaging Conditions},
+  author={Luo, Hongkun and Liu, Yang and Guo, Chi and Li, Zengke and Song, Weiwei},
+  journal={IEEE Sensors Journal},
+  year={2025},
+  publisher={IEEE}
+}
+```
+
 # Thanks
 
 * [VINS-Fusion](https://github.com/HKUST-Aerial-Robotics/VINS-Fusion)，[SuperPoint](https://github.com/magicleap/SuperPointPretrainedNetwork)，[DBoW3](https://github.com/rmsalinas/DBow3)，[LightGlue-OnnxRunner](https://github.com/OroChippw/LightGlue-OnnxRunner)
