@@ -32,6 +32,13 @@ body {
   width: 950px;
   margin: 0 auto;
   padding: 0;
+  text-align: center; /* 使内容居中 */
+}
+
+.summary-img {
+  max-width: 100%; /* 限制图像最大宽度 */
+  height: auto;    /* 保持图像比例 */
+  display: inline-block; /* 使图像作为内联块元素 */
 }
 
 #contentWrapper {

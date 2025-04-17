@@ -47,7 +47,7 @@
     <h1><strong>SuperVINS: A Real-Time Visual-Inertial SLAM Framework for Challenging Imaging Conditions</strong>
     </h1>
     <p id="authors">
-      <span class="conference">IEEE Journal in submission</span> <br>
+      <span class="conference">IEEE Senosrs Journal(JSEN)</span><br>
       <span>
         <a href="http://luohongkun.com/">Hongkun Luo<sup>1</sup></a>
       </span>
@@ -72,7 +72,7 @@
 
     <font size="+2">
       <p style="text-align: center;">
-        <a href="https://arxiv.org/abs/2407.21348" target="_blank">[Paper]</a> &nbsp;&nbsp;&nbsp;&nbsp;
+        <a href="https://ieeexplore.ieee.org/document/10949688" target="_blank">[Paper]</a> &nbsp;&nbsp;&nbsp;&nbsp;
         <a href="https://github.com/luohongk/SuperVINS" target="_blank">[Code]</a>&nbsp;&nbsp;&nbsp;&nbsp;
         <!-- <a href="SuperVINS/bibtex.txt" target="_blank">[BibTeX]</a> -->
       </p>
@@ -89,106 +89,50 @@
       SuperVINS is a visual-inertial SLAM framework that <strong> integrates deep learning features</strong> based on VINS-Fusion. It has the characteristics of high accuracy and high robustness.</a>
   
     <div id="contentWrapper">
-      <button id="prevButton" onclick="prevPage()">&#8249;</button>
+      <!-- <button id="prevButton" onclick="prevPage()">&#8249;</button> -->
       <div id="gif-display"></div>
-      <button id="nextButton" onclick="nextPage()">&#8250;</button>
+      <!-- <button id="nextButton" onclick="nextPage()">&#8250;</button> -->
     </div>
-    <div id="navBar">
-      <div class="navDot" id="dot0" onclick="goToPage(0)"></div>
-      <div class="navDot" id="dot1" onclick="goToPage(1)"></div>
-    </div>
+    <!-- <div id="navBar"> -->
+      <!-- <div class="navDot" id="dot0" onclick="goToPage(0)"></div> -->
+      <!-- <div class="navDot" id="dot1" onclick="goToPage(1)"></div> -->
+    <!-- </div> -->
   </div>
-  <script>
-    // pre-list all the image files under gif_cropped folder
+  <style>
+    #gif-display {
+        text-align: center; /* 使内容居中 */
+    }
+    .summary-img {
+        max-width: 100%; /* 限制图像最大宽度 */
+        height: auto;    /* 保持图像比例 */
+    }
+</style>
+
+<div id="gif-display"></div>
+
+<script>
+    // 只列出一个图像文件
     var allFiles = [
-    "mh01.gif",
-    "mh05.gif",
-    "v201.gif",
-    "SuperVINS_demo.gif",
-  ];
+        "SuperVINS.gif"
+    ];
 
-    var page = 0; // current page
-
-    function goToPage(p) {
-      page = p;
-      showPage();
-    }
-    // Create a copy of the allFiles array
-    var shuffledFiles = allFiles.slice();
-
-    // Fisher-Yates Shuffle
-    for (let i = shuffledFiles.length - 1; i > 0; i--) {
-      let j = Math.floor(Math.random() * (i + 1)); // random index from 0 to i
-
-      // swap elements i and j
-      [shuffledFiles[i], shuffledFiles[j]] = [shuffledFiles[j], shuffledFiles[i]];
-    }
     function showPage() {
-      var selectedFiles = shuffledFiles.slice(page * 10, (page + 1) * 10);
-
-      // construct a html string to show these images
-      var htmlStr = '<h3><center>Visualization results of SuperVINS experiments on EuRoC dataset: MH01, MH05, V201, and V202</center></h3> \
-      <p>This experiment is conducted on the Ubuntu 20.04 operating system,utilizing a GeForce RTX 2060 graphics card with NVIDIA driver version 530.41.03,and ROS neotic.Additionally,the system is configured with CUDA 11.7,CUDNN 8.9.6,and ONNX Runtime 1.16.3 to enable inference of deep learning models.To demonstrate the advantages of the improved algorithm,we employ the well-known public EuRoC dataset for our experiments.The system uses a re-trained deep learning-based Bag-of-Words model.To ensure comprehensive coverage of various scenarios,we expand the training dataset to include a hybrid set comprising the EuRoC,TUM,and KITTI datasets.  \
-      Click left/right arrow or navigate dots to view more results. </p><table>';
-      for (var i = 0; i < selectedFiles.length; i += 2) {
-        htmlStr += '<tr>';
-        for (var j = 0; j < 2; j++) {
-          if (i + j < selectedFiles.length) {
-            var file = selectedFiles[i + j];
-            htmlStr += '<td><img class="summary-img" src="./gif_cropped/' + file + '" style="width:100%;"></td>';
-            if (j == 0 && i + j + 1 < selectedFiles.length) {
-              // add a divider (dash line)
-              htmlStr += '<td class="divider"></td>';
-            }
-          }
-        }
-        htmlStr += '</tr>';
-      }
-      htmlStr += '</table>';
-      // add these images to a div with id 'content'
-      document.getElementById('gif-display').innerHTML = htmlStr;
-
-      // update navigation dots
-      for (var i = 0; i < 2; i++) {
-        var dot = document.getElementById('dot' + i);
-        if (i == page) {
-          dot.classList.add('navDotSelected');
-        } else {
-          dot.classList.remove('navDotSelected');
-        }
-      }
+        // 构建 HTML 字符串以显示该图像
+        var htmlStr = '<h3><center>Visualization results of SuperVINS experiments on UMA-VI dataset</center></h3> \
+        <p>This experiment is conducted on the Ubuntu 20.04 operating system, utilizing a GeForce RTX 2060 graphics card with NVIDIA driver version 530.41.03, and ROS neotic. Additionally, the system is configured with CUDA 11.7, CUDNN 8.9.6, and ONNX Runtime 1.16.3 to enable inference of deep learning models. To demonstrate the advantages of the improved algorithm, we employ the well-known public EuRoC dataset for our experiments. The system uses a re-trained deep learning-based Bag-of-Words model. To ensure comprehensive coverage of various scenarios, we expand the training dataset to include a hybrid set comprising the EuRoC, TUM, and KITTI datasets. \
+        </p><table style="margin: 0 auto;"><tr><td><img class="summary-img" src="./gif_cropped/' + allFiles[0] + '" style="width:100%;"></td></tr></table>';
+        
+        // 将图像添加到 id 为 'gif-display' 的 div 中
+        document.getElementById('gif-display').innerHTML = htmlStr;
     }
 
-    function prevPage() {
-      if (page > 0) {
-        page--;
-        // add these images to a div with id 'con
-        showPage();
-      }
-      else if (page == 0){
-      page= allFiles.length / 10 - 1;
-        showPage();
-      }
-    }
-
-    function nextPage() {
-      if (page < allFiles.length / 10 - 1) {
-        page++;
-        showPage();
-      }
-      else if (page == allFiles.length / 10 - 1) {
-      page=0;
-        showPage();
-      }
-    }
-
-    // Show the first page when the script is first run
+    // 运行时显示图像
     showPage();
-  </script>
+</script>
 
   <div class="content">
     <h2 style="text-align:center;">Abstract</h2>
-    <p>There is an increasing emphasis on achieving high accuracy and robustness in SLAM systems. Traditional visual-inertial SLAM system often struggles with stability under low-light or motion-blur conditions, leading to potential lost of trajectory tracking. High accuracy and robustness are essential for the long-term and stable positioning capabilities of SLAM systems. Addressing the challenges of enhancing robustness and accuracy in visual-inertial SLAM, this paper propose SuperVINS, a real-time visual-inertial SLAM framework designed for for challenging imaging conditions. Developed as an enhancement of VINS-Fusion, SuperVINS integrates the deep learning neural network model SuperPoint for feature point extraction and loop closure detection. At the same time, a deep learning neural network LightGlue model for associating  feature points is integrated in front-end feature point matching. A feature points matching optimization strategy based on the RANSAC algorithm is proposed. The system is capable of dynamically adjusting thresholds in response to environmental changing, thereby balancing computational cost and positioning accuracy. Additionally, it allows for flexible training of specific SuperPoint bag of words tailored for loop closure detection in particular environments.The system enables real-time positioning and mapping without the need for preprocessing. Experimental validation on the well-known EuRoC dataset demonstrates that SuperVINS outperforms in accuracy and robustness across most challenging sequences. This paper analyzes the advantages of SuperVINS in terms of accuracy, real-time performance, and robustness.</p>
+    <p>There is an increasing emphasis on achieving high accuracy and robustness in SLAM systems. The traditional visual-inertial SLAM system often struggles with stability under low-light or dynamic illumination, leading to the potential lost of trajectory tracking. High accuracy and robustness are crucial for ensuring the long-term stability and reliable localization performance of SLAM systems. To address the challenges of improving robustness and accuracy in visual-inertial SLAM, this paper proposes SuperVINS, a real-time visual-inertial SLAM framework designed for challenging imaging conditions. In contrast to geometric modeling, deep learning-based features are capable of fully leveraging the implicit information present in images, which is often not captured by geometric features. Therefore, SuperVINS, developed as an enhancement of VINS-Fusion, integrates the deep learning neural network model SuperPoint for feature point extraction and loop closure detection. At the same time, a deep learning neural network LightGlue model for associating feature points is integrated into front-end feature matching. We employed the RANSAC algorithm for matching enhancement to improve robustness against outliers. Additionally, SuperVINS enables flexibly integrated environment-specific SuperPoint bag-of-words models for improved loop closure detection. The system enables real-time localization and mapping. Experimental validation on the well-known EuRoC and UMA-VI datasets demonstrates that SuperVINS achieves comparable accuracy and robustness to other state-of-the-art visual-inertial SLAM systems, particularly in the most challenging sequences. This paper analyzes the advantages of SuperVINS in terms of accuracy, real-time performance, and robustness. To foster knowledge exchange in the field, we have publicly released the code associated with this paper. The code is available at: https://github.com/luohongk/SuperVINS.</p>
   </div>
 
   <div class="content">
@@ -204,14 +148,17 @@
   </div>
 
   <div class="content">
-    <h2>BibTex</h2>
-    <code> @article{supervins,<br>
-  &nbsp;&nbsp;title={SuperVINS: A visual-inertial SLAM framework integrated deep learning features},<br>
-  &nbsp;&nbsp;author={Hongkun Luo and Yang Liu and Chi Guo and Zengke Li},<br>
-  &nbsp;&nbsp;journal={arXiv preprint arXiv:2407.21348},<br>
-  &nbsp;&nbsp;year={2024}<br>
-  } </code>
-  </div>
+    <h3>BibTeX</h3>
+    <code>
+@article{luo2025supervins,<br>
+&nbsp;&nbsp;title={SuperVINS: A Real-Time Visual-Inertial SLAM Framework for Challenging Imaging Conditions},<br>
+&nbsp;&nbsp;author={Luo, Hongkun and Liu, Yang and Guo, Chi and Li, Zengke and Song, Weiwei},<br>
+&nbsp;&nbsp;journal={IEEE Sensors Journal},<br>
+&nbsp;&nbsp;year={2025},<br>
+&nbsp;&nbsp;publisher={IEEE}<br>
+}
+    </code>
+</div>
   <div class="content" id="acknowledgements">
     <p><strong>Acknowledgements</strong>:
       We borrow this template from <a href="https://sd-complements-dino.github.io/">A-tale-of-two-features</a>.
