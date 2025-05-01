@@ -22,7 +22,7 @@
           <img src="https://img.shields.io/badge/Cpp-14-blue" />
       </a>
       <a href="https://github.com/cvg/LightGlue">
-          <img src="https://img.shields.io/badge/DeepLearning-SuperPoint_LightGlue-red" />
+          <img src="https://img.shields.io/badge/SuperPoint_LightGlue-red" />
       </a>
       <a href="http://wiki.ros.org/noetic">
           <img src="https://img.shields.io/badge/ROS1-noetic-blue" />
