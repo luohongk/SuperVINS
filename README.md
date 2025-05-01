@@ -21,7 +21,7 @@
       <a href="https://cmake.org/">
           <img src="https://img.shields.io/badge/Cpp-14-blue" />
       </a>
-      <a href="https://example.com">
+      <a href="https://github.com/cvg/LightGlue">
           <img src="https://img.shields.io/badge/DeepLearning-SuperPoint_LightGlue-red" />
       </a>
       <a href="http://wiki.ros.org/noetic">
@@ -30,11 +30,11 @@
       <a href="https://github.com/DBoW3">
           <img src="https://img.shields.io/badge/BoW-DBoW3-red" />
       </a>
-      <a href="https://brainlab.whu.edu.cn">
-          <img src="https://img.shields.io/badge/WHU-BRAIN_LAB-red" />
+      <a href="https://www.gnu.org/licenses/gpl-3.0.html">
+          <img src="https://img.shields.io/badge/License-GPL3.0-yellow.svg" />
       </a>
-      <a href="https://en.wikipedia.org/wiki/Wuhan">
-          <img src="https://img.shields.io/badge/Wuhan University-China-green" />
+      <a href="https://www.zhiyuteam.com/">
+          <img src="https://img.shields.io/badge/Wuhan University-BRAIN_LAB-green" />
       </a>
   </p>
 </p>
