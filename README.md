@@ -34,7 +34,7 @@
           <img src="https://img.shields.io/badge/WHU-BRAIN_LAB-red" />
       </a>
       <a href="https://en.wikipedia.org/wiki/Wuhan">
-          <img src="https://img.shields.io/badge/Wuhan-China-green" />
+          <img src="https://img.shields.io/badge/Wuhan University-China-green" />
       </a>
   </p>
 </p>
