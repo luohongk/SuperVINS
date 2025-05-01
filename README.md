@@ -15,12 +15,27 @@
     <a href="https://luohongkun.com/SuperVINS/">Project Website</a> , <a href="https://ieeexplore.ieee.org/document/10949688">Paper (IEEE Sensors Journal)</a>
   </p>
   <p align="center">
-    <a href="https://github.com/luohongk/SuperVINS">
-      <img src="https://img.shields.io/badge/License-GPL3.0-yellow.svg" />
-    </a>
-    <a href="https://cmake.org/">
-      <img src="https://img.shields.io/badge/built%20with-Cmake-red.svg" />
-    </a>
+      <a href="https://github.com/luohongk/SuperVINS">
+          <img src="https://img.shields.io/badge/VINS-Image_IMU-red" />
+      </a>
+      <a href="https://cmake.org/">
+          <img src="https://img.shields.io/badge/Cpp-14-blue" />
+      </a>
+      <a href="https://example.com">
+          <img src="https://img.shields.io/badge/DeepLearning-SuperPoint_LightGlue-red" />
+      </a>
+      <a href="http://wiki.ros.org/noetic">
+          <img src="https://img.shields.io/badge/ROS1-noetic-blue" />
+      </a>
+      <a href="https://github.com/DBoW3">
+          <img src="https://img.shields.io/badge/BoW-DBoW3-red" />
+      </a>
+      <a href="https://brainlab.whu.edu.cn">
+          <img src="https://img.shields.io/badge/WHU-BRAIN_LAB-red" />
+      </a>
+      <a href="https://en.wikipedia.org/wiki/Wuhan">
+          <img src="https://img.shields.io/badge/Wuhan-China-green" />
+      </a>
   </p>
 </p>
 
