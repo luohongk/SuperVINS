@@ -66,9 +66,10 @@ class Matcher_DPL
 
 
     float matchThresh=0.5;
+    float last_avg_match_score = 0.0f; // 上一次匹配的平均置信度 / Average confidence of last matching
     std::vector<cv::Point2f> pre_process(std::vector<cv::Point2f> kpts, int h, int w);
     std::vector<std::pair<int,int>> post_process();
     std::vector<std::pair<int,int>> match_featurepoints(std::vector<cv::Point2f> kpts0, std::vector<cv::Point2f> kpts1, float *desc0, float *desc1);
-    
+
     int extractor_type = 0;
 };

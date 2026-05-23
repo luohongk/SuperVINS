@@ -212,6 +212,37 @@ std::vector<cv::Point2f> Matcher_DPL::pre_process(std::vector<cv::Point2f> kpts,
 
 std::vector<std::pair<int, int>> Matcher_DPL::match_featurepoints(std::vector<cv::Point2f> kpts0, std::vector<cv::Point2f> kpts1, float *desc0, float *desc1)
 {
+    // 记录原始大小，用于后续过滤填充点的匹配
+    const int orig_size0 = kpts0.size();
+    const int orig_size1 = kpts1.size();
+
+    // RTX 40系列 GPU 在特征点数量较少时会触发 packed QKV bug
+    // 通过填充到最小尺寸 256 来规避此问题
+    const int MIN_KPT_SIZE = 256;
+    int desc_dim = (extractor_type == SUPERPOINT) ? 256 : 128;
+
+    // 填充 kpts0 和 desc0
+    std::vector<float> padded_desc0;
+    if (orig_size0 < MIN_KPT_SIZE)
+    {
+        padded_desc0.resize(MIN_KPT_SIZE * desc_dim, 0.0f);
+        memcpy(padded_desc0.data(), desc0, orig_size0 * desc_dim * sizeof(float));
+        desc0 = padded_desc0.data();
+        for (int i = orig_size0; i < MIN_KPT_SIZE; i++)
+            kpts0.push_back(cv::Point2f(-10.0f, -10.0f)); // 填充无效坐标
+    }
+
+    // 填充 kpts1 和 desc1
+    std::vector<float> padded_desc1;
+    if (orig_size1 < MIN_KPT_SIZE)
+    {
+        padded_desc1.resize(MIN_KPT_SIZE * desc_dim, 0.0f);
+        memcpy(padded_desc1.data(), desc1, orig_size1 * desc_dim * sizeof(float));
+        desc1 = padded_desc1.data();
+        for (int i = orig_size1; i < MIN_KPT_SIZE; i++)
+            kpts1.push_back(cv::Point2f(-10.0f, -10.0f)); // 填充无效坐标
+    }
+
     InputNodeShapes[0] = {1, static_cast<int>(kpts0.size()), 2};
     InputNodeShapes[1] = {1, static_cast<int>(kpts1.size()), 2};
     if (extractor_type  == SUPERPOINT)
@@ -255,8 +286,22 @@ std::vector<std::pair<int, int>> Matcher_DPL::match_featurepoints(std::vector<cv
         memory_info_handler, desc1, kpts1.size() * 256,
         InputNodeShapes[3].data(), InputNodeShapes[3].size()));
 
-    auto output_tensor = Session->Run(Ort::RunOptions{nullptr}, InputNodeNames.data(), input_tensors.data(),
-                                      input_tensors.size(), OutputNodeNames.data(), OutputNodeNames.size());
+    std::vector<Ort::Value> output_tensor;
+    try
+    {
+        output_tensor = Session->Run(Ort::RunOptions{nullptr}, InputNodeNames.data(), input_tensors.data(),
+                                     input_tensors.size(), OutputNodeNames.data(), OutputNodeNames.size());
+    }
+    catch (const Ort::Exception &e)
+    {
+        // GPU 推理失败（如 packed QKV 不支持特定输入大小），返回空匹配
+        // GPU inference failed (e.g. packed QKV unsupported for certain input sizes), return empty matches
+        std::cerr << "[WARN] Matcher GPU inference failed: " << e.what() << std::endl;
+        std::cerr << "[WARN] Skipping matching for this frame (kpts0=" << kpts0.size() << ", kpts1=" << kpts1.size() << ")" << std::endl;
+        delete[] kpts0_data;
+        delete[] kpts1_data;
+        return std::vector<std::pair<int, int>>();
+    }
 
     for (auto &tensor : output_tensor)
     {
@@ -276,6 +321,21 @@ std::vector<std::pair<int, int>> Matcher_DPL::match_featurepoints(std::vector<cv
     delete[] kpts0_data;
     delete[] kpts1_data;
 
+    // 过滤掉涉及填充点的匹配（索引 >= 原始大小的为填充点）
+    // Filter out matches involving padded points (index >= original size are padding)
+    if (orig_size0 < MIN_KPT_SIZE || orig_size1 < MIN_KPT_SIZE)
+    {
+        std::vector<std::pair<int, int>> filtered_matches;
+        for (auto &m : result_matches)
+        {
+            if (m.first < orig_size0 && m.second < orig_size1)
+            {
+                filtered_matches.push_back(m);
+            }
+        }
+        return filtered_matches;
+    }
+
     return result_matches;
 }
 
@@ -287,12 +347,16 @@ std::vector<std::pair<int, int>> Matcher_DPL::post_process()
     int64_t *matches = (int64_t *)outputtensors[0].GetTensorMutableData<void>();
     std::vector<int64_t> mscore_Shape = outputtensors[1].GetTensorTypeAndShapeInfo().GetShape();
     float *mscores = (float *)outputtensors[1].GetTensorMutableData<void>();
+    float score_sum = 0.0f;
     for (int i = 0; i < matches_Shape[0]; i++)
     {
         if (mscores[i] > this->matchThresh)
         {
             good_matches.emplace_back(std::make_pair(matches[i * 2], matches[i * 2+1]));
+            score_sum += mscores[i];
         }
     }
+    // 计算平均匹配置信度
+    last_avg_match_score = good_matches.empty() ? 0.0f : score_sum / good_matches.size();
     return good_matches;
 }

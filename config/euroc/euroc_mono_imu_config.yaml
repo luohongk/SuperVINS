@@ -39,7 +39,7 @@ min_dist: 10
 
 #matcher parameters
 matche_score_threshold: 0.7
-ransacReprojThreshold: 0.5
+ransacReprojThreshold: 1.0
 
 freq: 10                # frequence (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequence will be same as raw image 
 F_threshold: 1.0        # ransac threshold (pixel)

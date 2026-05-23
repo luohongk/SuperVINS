@@ -14,6 +14,7 @@
 #include <cstdio>
 #include <iostream>
 #include <queue>
+#include <deque>
 #include <execinfo.h>
 #include <csignal>
 #include <opencv2/opencv.hpp>
@@ -90,6 +91,11 @@ public:
     void initializeExtractorMatcher(int extractor_type_, string &extractor_weight_path, string &matcher_weight_path, float matcher_threshold);
     std::shared_ptr<Extractor_DPL> FeatureExtractorDPL;
     std::shared_ptr<Matcher_DPL> FeatureMatcherDPL;
+
+    // 自适应 RANSAC：历史内点率滑动窗口 / Adaptive RANSAC: historical inlier rate sliding window
+    std::deque<float> historical_inlier_rates;
+    static const int INLIER_RATE_WINDOW_SIZE = 15;
+    float getHistoricalInlierRate() const;
 
     vector<pair<cv::Point2f, vector<float>>> prev_dplpts_descriptors, cur_dplpts_descriptors, cur_dplpts_right_descriptors;
 

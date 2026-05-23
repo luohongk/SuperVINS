@@ -133,6 +133,16 @@ FeatureTrackerDPL::FeatureTrackerDPL()
     hasPrediction = false;
 }
 
+float FeatureTrackerDPL::getHistoricalInlierRate() const
+{
+    if (historical_inlier_rates.empty())
+        return 0.9f; // 初始默认值
+    float sum = 0.0f;
+    for (float r : historical_inlier_rates)
+        sum += r;
+    return sum / historical_inlier_rates.size();
+}
+
 void FeatureTrackerDPL::match_features_dpl(cv::Mat prev_img_, cv::Mat cur_img_, vector<pair<cv::Point2f, vector<float>>> &prev_dplpts_descriptors_, vector<pair<cv::Point2f, vector<float>>> &cur_dplpts_descriptors_, vector<pair<int, int>> &result_matches,double &ransacReprojThreshold)
 {
     // 定义特征点与描述子大小
@@ -212,8 +222,10 @@ void FeatureTrackerDPL::match_features_dpl(cv::Mat prev_img_, cv::Mat cur_img_, 
 
     double avg_displacement = total_displacement / tem_matches.size();
 
-    // 深度学习特征点定位精度低于传统角点，使用更宽松的 RANSAC 阈值
-    const double DPL_F_THRESHOLD = 2.0;
+    // RANSAC 阈值从配置文件读取 (ransacReprojThreshold)，可按数据集调节
+    // RANSAC threshold loaded from config file, adjustable per dataset
+    const double DPL_F_THRESHOLD = ransacReprojThreshold;
+
     std::vector<uchar> inliersMask;
     cv::Mat fundamentalMatrix = cv::findFundamentalMat(un_prev_pts, un_cur_pts, cv::FM_RANSAC, DPL_F_THRESHOLD, 0.99, inliersMask);
 
@@ -227,40 +239,64 @@ void FeatureTrackerDPL::match_features_dpl(cv::Mat prev_img_, cv::Mat cur_img_, 
         }
     }
 
+    float current_inlier_rate = (tem_matches.size() > 0) ? (float)inlier_count / tem_matches.size() : 0.0f;
+    float avg_confidence = FeatureMatcherDPL->last_avg_match_score;
+    float hist_inlier_rate = getHistoricalInlierRate();
+
+    // ========== 自适应判断逻辑 ==========
+    // 1. F 估计完全失败或内点太少 → 接受全部
+    // 2. 置信度高 + 当前内点率显著低于历史均值 → F 退化（小运动），接受全部
+    // 3. 否则 → 正常过滤，只保留内点
+
+    bool accept_all = false;
+    std::string reason;
+
+    if (fundamentalMatrix.empty() || inliersMask.empty() || inlier_count < 8)
+    {
+        accept_all = true;
+        reason = "F_failed/too_few";
+    }
+    else if (avg_confidence > 0.85f && current_inlier_rate < (hist_inlier_rate - 0.25f))
+    {
+        // 高置信度匹配 + 内点率突降 → F 矩阵退化（不是真正的外点）
+        accept_all = true;
+        reason = "high_conf+rate_drop(F_degenerate)";
+    }
+
     // DEBUG 打印
-    std::cout << "[RANSAC] LG_matches=" << tem_matches.size()
-              << " | avg_disp=" << std::fixed << std::setprecision(1) << avg_displacement << "px"
-              << " | F_empty=" << fundamentalMatrix.empty()
-              << " | inliers=" << inlier_count
-              << " | ratio=" << std::setprecision(2) << (tem_matches.size() > 0 ? (float)inlier_count / tem_matches.size() : 0)
-              << " | threshold=" << DPL_F_THRESHOLD << "px" << std::flush;
+    std::cout << "[RANSAC] LG=" << tem_matches.size()
+              << " | disp=" << std::fixed << std::setprecision(1) << avg_displacement << "px"
+              << " | conf=" << std::setprecision(2) << avg_confidence
+              << " | inlier=" << inlier_count << "(" << std::setprecision(2) << current_inlier_rate << ")"
+              << " | hist=" << std::setprecision(2) << hist_inlier_rate
+              << std::flush;
 
-    // 如果 RANSAC 失败，接受所有匹配
-    if (fundamentalMatrix.empty() || inliersMask.empty())
+    if (accept_all)
     {
-        std::cout << " → F_failed, accept all" << std::endl;
-        result_matches = tem_matches;
-        return;
-    }
-
-    // 获取内点
-    for (size_t i = 0; i < inliersMask.size(); ++i)
-    {
-        if (inliersMask[i])
-        {
-            result_matches.push_back(tem_matches[i]);
-        }
-    }
-
-    // 如果 RANSAC 过滤太多（内点 < 60%），说明 F 不可靠，回退到全部接受
-    if (result_matches.size() < tem_matches.size() * 0.6)
-    {
-        std::cout << " → inlier<60%, fallback accept all" << std::endl;
+        std::cout << " → " << reason << ", accept all" << std::endl;
         result_matches = tem_matches;
     }
     else
     {
+        // 正常过滤，只保留内点
+        for (size_t i = 0; i < inliersMask.size(); ++i)
+        {
+            if (inliersMask[i])
+            {
+                result_matches.push_back(tem_matches[i]);
+            }
+        }
         std::cout << " → filtered, keep " << result_matches.size() << "/" << tem_matches.size() << std::endl;
+    }
+
+    // 更新历史内点率（仅在 F 有效时更新，退化帧不计入历史）
+    if (!accept_all)
+    {
+        historical_inlier_rates.push_back(current_inlier_rate);
+        if ((int)historical_inlier_rates.size() > INLIER_RATE_WINDOW_SIZE)
+        {
+            historical_inlier_rates.pop_front();
+        }
     }
 }
 
@@ -312,6 +348,7 @@ void FeatureTrackerDPL::match_with_predictions_dpl(cv::Mat prev_img_, cv::Mat cu
     // 去畸变用于 RANSAC
     float scale = FeatureExtractorDPL->scale;
     vector<cv::Point2f> un_prev_pts(matches.size()), un_cur_pts(matches.size());
+    double total_displacement = 0.0;
     for (size_t i = 0; i < matches.size(); i++)
     {
         cv::Point2f prev_dplpt = prev_dplpts[matches[i].first];
@@ -327,29 +364,61 @@ void FeatureTrackerDPL::match_with_predictions_dpl(cv::Mat prev_img_, cv::Mat cu
         m_camera[0]->liftProjective(Eigen::Vector2d(cur_pixel.x, cur_pixel.y), tmp_p);
         un_cur_pts[i] = cv::Point2f(FOCAL_LENGTH * tmp_p.x() / tmp_p.z() + col / 2.0,
                                     FOCAL_LENGTH * tmp_p.y() / tmp_p.z() + row / 2.0);
+
+        double dx = un_cur_pts[i].x - un_prev_pts[i].x;
+        double dy = un_cur_pts[i].y - un_prev_pts[i].y;
+        total_displacement += sqrt(dx * dx + dy * dy);
     }
 
-    const double DPL_F_THRESHOLD = 2.0;
+    double avg_displacement = total_displacement / matches.size();
+    const double DPL_F_THRESHOLD = ransacReprojThreshold;
+
     std::vector<uchar> inliersMask;
     cv::Mat fundamentalMatrix = cv::findFundamentalMat(un_prev_pts, un_cur_pts, cv::FM_RANSAC, DPL_F_THRESHOLD, 0.99, inliersMask);
 
-    if (fundamentalMatrix.empty() || inliersMask.empty())
+    int inlier_count = 0;
+    if (!fundamentalMatrix.empty() && !inliersMask.empty())
     {
-        result_matches = matches;
-        return;
-    }
-
-    for (size_t i = 0; i < inliersMask.size(); ++i)
-    {
-        if (inliersMask[i])
+        for (size_t i = 0; i < inliersMask.size(); ++i)
         {
-            result_matches.push_back(matches[i]);
+            if (inliersMask[i]) inlier_count++;
         }
     }
 
-    if (result_matches.size() < matches.size() * 0.6)
+    float current_inlier_rate = (matches.size() > 0) ? (float)inlier_count / matches.size() : 0.0f;
+    float avg_confidence = FeatureMatcherDPL->last_avg_match_score;
+    float hist_inlier_rate = getHistoricalInlierRate();
+
+    // 自适应判断（与 match_features_dpl 一致）
+    bool accept_all = false;
+    if (fundamentalMatrix.empty() || inliersMask.empty() || inlier_count < 8)
+    {
+        accept_all = true;
+    }
+    else if (avg_confidence > 0.85f && current_inlier_rate < (hist_inlier_rate - 0.25f))
+    {
+        accept_all = true;
+    }
+
+    if (accept_all)
     {
         result_matches = matches;
+    }
+    else
+    {
+        for (size_t i = 0; i < inliersMask.size(); ++i)
+        {
+            if (inliersMask[i])
+            {
+                result_matches.push_back(matches[i]);
+            }
+        }
+        // 更新历史内点率
+        historical_inlier_rates.push_back(current_inlier_rate);
+        if ((int)historical_inlier_rates.size() > INLIER_RATE_WINDOW_SIZE)
+        {
+            historical_inlier_rates.pop_front();
+        }
     }
 }
 
