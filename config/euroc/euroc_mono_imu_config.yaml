@@ -49,7 +49,7 @@ flow_back: 1            # perform forward and backward optical flow to improve f
 #optimization parameters
 max_solver_time: 0.04  # max solver itration time (ms), to guarantee real time
 max_num_iterations: 8   # max solver itrations, to guarantee real time
-keyframe_parallax: 10.0 # keyframe selection threshold (pixel)
+keyframe_parallax: 5.0 # keyframe selection threshold (pixel)
 
 #imu parameters       The more accurate parameters you provide, the better performance
 acc_n: 0.1          # accelerometer measurement noise standard deviation. 
@@ -72,7 +72,7 @@ save_image: 1                   # save image in pose graph for visualization pru
 
 #deep learning feature points weights
 extractor_weight_path: "SuperVINS/supervins_estimator/weights_dpl/superpoint.onnx"
-matcher_weight_path: "SuperVINS/supervins_estimator/weights_dpl/superpoint_lightglue_fused_cpu.onnx" 
+matcher_weight_path: "SuperVINS/supervins_estimator/weights_dpl/superpoint_lightglue_fused.onnx" 
 
 # Bag of Words path
 voc_relative_path: "SuperVINS/supervins_loop_fusion/src/ThirdParty/Voc/superpoint1.yml.gz" 

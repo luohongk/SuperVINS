@@ -139,13 +139,11 @@ void FeatureTrackerDPL::match_features_dpl(cv::Mat prev_img_, cv::Mat cur_img_, 
      // Define feature points and descriptor size
     int n_pre = prev_dplpts_descriptors_.size();
     int n_cur = cur_dplpts_descriptors_.size();
-    // debug
-    // cout << "prev_dples size = " << n_pre << "cur_dpls size=" << n_cur << endl;
     vector<cv::Point2f> prev_dplpts, cur_dplpts;
     prev_dplpts.reserve(n_pre);
     cur_dplpts.reserve(n_cur);
-    float prev_descriptors[n_pre * descriptor_size];
-    float cur_descriptors[n_cur * descriptor_size];
+    std::vector<float> prev_descriptors(n_pre * descriptor_size);
+    std::vector<float> cur_descriptors(n_cur * descriptor_size);
 
     for (int i = 0; i < n_pre; i++)
     {
@@ -179,54 +177,90 @@ void FeatureTrackerDPL::match_features_dpl(cv::Mat prev_img_, cv::Mat cur_img_, 
     // 正式匹配特征点
     // Formal matching feature points
     vector<pair<int, int>> tem_matches;
-    tem_matches = FeatureMatcherDPL->match_featurepoints(prev_dplpts_normalized, cur_dplpts_normalized, prev_descriptors, cur_descriptors);
+    tem_matches = FeatureMatcherDPL->match_featurepoints(prev_dplpts_normalized, cur_dplpts_normalized, prev_descriptors.data(), cur_descriptors.data());
 
-    // std::cout<<"tem_matches size = "<<tem_matches.size()<<std::endl;
-
-    // 假设有两个名为 keypoints1 和 keypoints2 的关键点向量，分别对应两个图像
-    // std::vector<cv::KeyPoint> prev_dplpts_normalized, cur_dplpts_normalized;
-
-    // Suppose there are two keypoint vectors named keypoints1 and keypoints2, corresponding to two images respectively.
-    vector<cv::Point2f> points1, points2;
-    // 假设从 matches 中提取出了对应的关键点
-    // Assume that the corresponding key points are extracted from matches
-    for (const auto &match : tem_matches)
+    if (tem_matches.size() < 8)
     {
-        cv::Point2f pt1 = prev_dplpts_normalized[match.first];
-        cv::Point2f pt2 = cur_dplpts_normalized[match.second];
-
-        // 将这些点存储在两个点向量中
-        // Store these points in two point vectors
-        points1.push_back(pt1);
-        points2.push_back(pt2);
+        result_matches = tem_matches;
+        return;
     }
 
-    // RANSAC 参数，// RANSAC 阈值
-    // RANSAC parameters, //RANSAC threshold
-    // double ransacReprojThreshold = 0.05; 
-    // cout<<"RANSAC threshold = "<<ransacReprojThreshold<<endl;
+    // 将匹配点从缩放空间转换到像素空间，并进行去畸变，用于 RANSAC
+    float scale = FeatureExtractorDPL->scale;
+    vector<cv::Point2f> un_prev_pts(tem_matches.size()), un_cur_pts(tem_matches.size());
+    double total_displacement = 0.0;
+    for (size_t i = 0; i < tem_matches.size(); i++)
+    {
+        cv::Point2f prev_dplpt = prev_dplpts[tem_matches[i].first];
+        cv::Point2f cur_dplpt = cur_dplpts[tem_matches[i].second];
+        cv::Point2f prev_pixel((prev_dplpt.x + 0.5) / scale - 0.5, (prev_dplpt.y + 0.5) / scale - 0.5);
+        cv::Point2f cur_pixel((cur_dplpt.x + 0.5) / scale - 0.5, (cur_dplpt.y + 0.5) / scale - 0.5);
 
-    // 使用 RANSAC 进行模型估计
-    // Model estimation using RANSAC
+        Eigen::Vector3d tmp_p;
+        m_camera[0]->liftProjective(Eigen::Vector2d(prev_pixel.x, prev_pixel.y), tmp_p);
+        un_prev_pts[i] = cv::Point2f(FOCAL_LENGTH * tmp_p.x() / tmp_p.z() + col / 2.0,
+                                     FOCAL_LENGTH * tmp_p.y() / tmp_p.z() + row / 2.0);
+
+        m_camera[0]->liftProjective(Eigen::Vector2d(cur_pixel.x, cur_pixel.y), tmp_p);
+        un_cur_pts[i] = cv::Point2f(FOCAL_LENGTH * tmp_p.x() / tmp_p.z() + col / 2.0,
+                                    FOCAL_LENGTH * tmp_p.y() / tmp_p.z() + row / 2.0);
+
+        double dx = un_cur_pts[i].x - un_prev_pts[i].x;
+        double dy = un_cur_pts[i].y - un_prev_pts[i].y;
+        total_displacement += sqrt(dx * dx + dy * dy);
+    }
+
+    double avg_displacement = total_displacement / tem_matches.size();
+
+    // 深度学习特征点定位精度低于传统角点，使用更宽松的 RANSAC 阈值
+    const double DPL_F_THRESHOLD = 2.0;
     std::vector<uchar> inliersMask;
+    cv::Mat fundamentalMatrix = cv::findFundamentalMat(un_prev_pts, un_cur_pts, cv::FM_RANSAC, DPL_F_THRESHOLD, 0.99, inliersMask);
 
-    // std::cout<<"start find fundamental matrix"<<std::endl;
-    // std::cout<<"points1 size = "<<points1.size()<<std::endl;
-    // std::cout<<"points2 size = "<<points2.size()<<std::endl;
-    cv::Mat fundamentalMatrix = cv::findFundamentalMat(points1, points2, cv::FM_RANSAC, ransacReprojThreshold, 0.99, inliersMask);
+    // 统计内点
+    int inlier_count = 0;
+    if (!fundamentalMatrix.empty() && !inliersMask.empty())
+    {
+        for (size_t i = 0; i < inliersMask.size(); ++i)
+        {
+            if (inliersMask[i]) inlier_count++;
+        }
+    }
 
-    // std::cout<<"end find fundamental matrix"<<std::endl;
+    // DEBUG 打印
+    std::cout << "[RANSAC] LG_matches=" << tem_matches.size()
+              << " | avg_disp=" << std::fixed << std::setprecision(1) << avg_displacement << "px"
+              << " | F_empty=" << fundamentalMatrix.empty()
+              << " | inliers=" << inlier_count
+              << " | ratio=" << std::setprecision(2) << (tem_matches.size() > 0 ? (float)inlier_count / tem_matches.size() : 0)
+              << " | threshold=" << DPL_F_THRESHOLD << "px" << std::flush;
+
+    // 如果 RANSAC 失败，接受所有匹配
+    if (fundamentalMatrix.empty() || inliersMask.empty())
+    {
+        std::cout << " → F_failed, accept all" << std::endl;
+        result_matches = tem_matches;
+        return;
+    }
 
     // 获取内点
-    // Get interior points
-    // std::vector<cv::Point2f> inlierPrevPts, inlierCurPts;
-    std::vector<pair<int, int>> inlierMatches;
-    for (int i = 0; i < inliersMask.size(); ++i)
+    for (size_t i = 0; i < inliersMask.size(); ++i)
     {
         if (inliersMask[i])
         {
             result_matches.push_back(tem_matches[i]);
         }
+    }
+
+    // 如果 RANSAC 过滤太多（内点 < 60%），说明 F 不可靠，回退到全部接受
+    if (result_matches.size() < tem_matches.size() * 0.6)
+    {
+        std::cout << " → inlier<60%, fallback accept all" << std::endl;
+        result_matches = tem_matches;
+    }
+    else
+    {
+        std::cout << " → filtered, keep " << result_matches.size() << "/" << tem_matches.size() << std::endl;
     }
 }
 
@@ -237,8 +271,8 @@ void FeatureTrackerDPL::match_with_predictions_dpl(cv::Mat prev_img_, cv::Mat cu
     vector<cv::Point2f> prev_dplpts, cur_dplpts;
     prev_dplpts.reserve(n_pre);
     cur_dplpts.reserve(n_cur);
-    float prev_descriptors[n_pre * descriptor_size];
-    float cur_descriptors[n_cur * descriptor_size];
+    std::vector<float> prev_descriptors(n_pre * descriptor_size);
+    std::vector<float> cur_descriptors(n_cur * descriptor_size);
 
     for (int i = 0; i < n_pre; i++)
     {
@@ -267,26 +301,55 @@ void FeatureTrackerDPL::match_with_predictions_dpl(cv::Mat prev_img_, cv::Mat cu
     vector<cv::Point2f> prev_dplpts_normalized = FeatureMatcherDPL->pre_process(prev_dplpts, prev_img_.rows, prev_img_.cols);
     vector<cv::Point2f> cur_dplpts_normalized = FeatureMatcherDPL->pre_process(cur_dplpts, cur_img_.rows, cur_img_.cols);
 
-    vector<pair<int, int>> matches = FeatureMatcherDPL->match_featurepoints(prev_dplpts_normalized, cur_dplpts_normalized, prev_descriptors, cur_descriptors);
-    // RANSAC 参数
-    // double ransacReprojThreshold = 0.06; // RANSAC 阈值
-    // cout<<"RANSAC threshold = "<<ransacReprojThreshold<<endl;
+    vector<pair<int, int>> matches = FeatureMatcherDPL->match_featurepoints(prev_dplpts_normalized, cur_dplpts_normalized, prev_descriptors.data(), cur_descriptors.data());
 
-    // 使用 RANSAC 进行模型估计
+    if (matches.size() < 8)
+    {
+        result_matches = matches;
+        return;
+    }
+
+    // 去畸变用于 RANSAC
+    float scale = FeatureExtractorDPL->scale;
+    vector<cv::Point2f> un_prev_pts(matches.size()), un_cur_pts(matches.size());
+    for (size_t i = 0; i < matches.size(); i++)
+    {
+        cv::Point2f prev_dplpt = prev_dplpts[matches[i].first];
+        cv::Point2f cur_dplpt = cur_dplpts[matches[i].second];
+        cv::Point2f prev_pixel((prev_dplpt.x + 0.5) / scale - 0.5, (prev_dplpt.y + 0.5) / scale - 0.5);
+        cv::Point2f cur_pixel((cur_dplpt.x + 0.5) / scale - 0.5, (cur_dplpt.y + 0.5) / scale - 0.5);
+
+        Eigen::Vector3d tmp_p;
+        m_camera[0]->liftProjective(Eigen::Vector2d(prev_pixel.x, prev_pixel.y), tmp_p);
+        un_prev_pts[i] = cv::Point2f(FOCAL_LENGTH * tmp_p.x() / tmp_p.z() + col / 2.0,
+                                     FOCAL_LENGTH * tmp_p.y() / tmp_p.z() + row / 2.0);
+
+        m_camera[0]->liftProjective(Eigen::Vector2d(cur_pixel.x, cur_pixel.y), tmp_p);
+        un_cur_pts[i] = cv::Point2f(FOCAL_LENGTH * tmp_p.x() / tmp_p.z() + col / 2.0,
+                                    FOCAL_LENGTH * tmp_p.y() / tmp_p.z() + row / 2.0);
+    }
+
+    const double DPL_F_THRESHOLD = 2.0;
     std::vector<uchar> inliersMask;
-    cv::Mat fundamentalMatrix = cv::findFundamentalMat(prev_dplpts_normalized, cur_dplpts_normalized, cv::FM_RANSAC, ransacReprojThreshold, 0.99, inliersMask);
+    cv::Mat fundamentalMatrix = cv::findFundamentalMat(un_prev_pts, un_cur_pts, cv::FM_RANSAC, DPL_F_THRESHOLD, 0.99, inliersMask);
 
-    // 获取内点
-    std::vector<cv::Point2f> inlierPrevPts, inlierCurPts;
-    std::vector<pair<int, int>> inlierMatches;
-    for (int i = 0; i < inliersMask.size(); ++i)
+    if (fundamentalMatrix.empty() || inliersMask.empty())
+    {
+        result_matches = matches;
+        return;
+    }
+
+    for (size_t i = 0; i < inliersMask.size(); ++i)
     {
         if (inliersMask[i])
         {
-            inlierPrevPts.push_back(prev_dplpts_normalized[i]);
-            inlierCurPts.push_back(cur_dplpts_normalized[i]);
             result_matches.push_back(matches[i]);
         }
+    }
+
+    if (result_matches.size() < matches.size() * 0.6)
+    {
+        result_matches = matches;
     }
 }
 
@@ -901,6 +964,16 @@ void FeatureTrackerDPL::removeOutliers(set<int> &removePtsIds)
     reduceVector(prev_pts, status);
     reduceVector(ids, status);
     reduceVector(track_cnt, status);
+
+    // 同步缩减 prev_dplpts_descriptors 以保持与 ids 对齐
+    // Synchronously reduce prev_dplpts_descriptors to keep aligned with ids
+    int j = 0;
+    for (int i = 0; i < int(prev_dplpts_descriptors.size()); i++)
+    {
+        if (status[i])
+            prev_dplpts_descriptors[j++] = prev_dplpts_descriptors[i];
+    }
+    prev_dplpts_descriptors.resize(j);
 }
 
 cv::Mat FeatureTrackerDPL::getTrackImage()

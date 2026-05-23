@@ -7,7 +7,7 @@
  * Hongkun Luo
 -->
 
- <h1 align="center">SuperVINS: A Real-Time Visual-Inertial SLAM Framework for Challenging Imaging Conditions</h1>
+<h1 align="center">SuperVINS: A Real-Time Visual-Inertial SLAM Framework for Challenging Imaging Conditions</h1>
   <h3 align="center">
     <a href="https://luohongkun.top/">Hongkun Luo</a>, <a href="">Yang Liu</a>, <a href="https://jszy.whu.edu.cn/guochi">Chi Guo</a>, <a href="https://cesi.cumt.edu.cn/info/1101/8625.htm">Zengke Li</a>, <a href="https://gnsscenter.whu.edu.cn/info/1301/1081.htm">Weiwei Song</a>
   </h3>
@@ -64,6 +64,42 @@ If you want to watch the full demo video, please click the [link](resources/vide
 This project is improved based on VINS-Fusion. [VINS-Fusion](https://github.com/HKUST-Aerial-Robotics/VINS-Fusion) is a well-known SLAM framework. The original version of VINS-Fusion front-end uses traditional geometric feature points and then performs optical flow tracking. This project uses the feature point method, introduces SuperPoint feature points and feature descriptors, and uses the LightGlue network for feature matching. In the loopback part, the original VINS-Fusion extracts the brief descriptor and uses DBoW2 for loopback detection. This project uses DBoW3 and SuperPoint deep learning descriptors for loopback detection. Created a SLAM system based on deep learning.
 
 Why is it called SuperVINS? We named this project in honor of SuperPoint and VINS-Fusion. In this project, "Super" does not mean "super and excellent", it just means that the SuperPoint descriptor runs through the front-end and loop closure detection. "VINS" means that this project uses the visual-inertial fusion algorithm, Meanwhile，it is also to thank VINS-Fusion for its outstanding contribution.
+
+# 2 Build Project（by docker）
+
+宿主机安装NVIDIA Container Toolkit（https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
+
+```
+cd SuperVINS
+docker build -f docker/Dockerfile -t supervins:latest .
+```
+
+或者docker pull???
+
+### 交互式运行
+
+```
+  xhost +local:root && \
+    docker run -it \
+      --gpus all \
+      --network=host \
+      --privileged \
+      -v /tmp/.X11-unix:/tmp/.X11-unix \
+      -e DISPLAY=$DISPLAY \
+      -v /home/lhk/workspace/SuperVINS:/root/catkin_ws/src/SuperVINS \
+      -v /home/lhk/data:/data \
+      --name supervins_work \
+      -w /root/catkin_ws \
+      supervins:latest
+```
+
+编译：
+
+```
+cd ~/catkin_ws  
+catkin_make -DCMAKE_BUILD_TYPE=Release
+  source devel/setup.bash
+```
 
 # 2 Build Project
 
@@ -151,6 +187,9 @@ catkin_make
 ```
 
 ### 4.5 Run the project
+
+
+source devel/setup.bash
 
 ```bash
 roslaunch supervins supervins_rviz.launch

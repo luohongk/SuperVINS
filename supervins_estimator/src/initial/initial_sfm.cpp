@@ -68,11 +68,11 @@ bool GlobalSFM::solveFrameByPnP(Matrix3d &R_initial, Vector3d &P_initial, int i,
 		}
 	}
 
-	//匹配点数目要大于等于15个
-	if (int(pts_2_vector.size()) < 15)
+	//匹配点数目要大于等于10个
+	if (int(pts_2_vector.size()) < 10)
 	{
 		printf("unstable features tracking, please slowly move you device!\n");
-		if (int(pts_2_vector.size()) < 10)
+		if (int(pts_2_vector.size()) < 6)
 			return false;
 	}
 

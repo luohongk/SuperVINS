@@ -32,7 +32,7 @@ class Extractor_DPL
     // std::pair<std::vector<cv::Point2f>, std::vector<cv::Point2f>> descriptors_result;
 
     cv::Mat pre_process(const cv::Mat &Image, float &scale);
-    std::pair<std::vector<cv::Point2f>, float *> post_process(std::vector<Ort::Value> tensor);
+    std::pair<std::vector<cv::Point2f>, float *> post_process(std::vector<Ort::Value> &tensor);
     std::pair<std::vector<cv::Point2f>, float *> extract_featurepoints(const cv::Mat &image);
 
     int extractor_type = 0;

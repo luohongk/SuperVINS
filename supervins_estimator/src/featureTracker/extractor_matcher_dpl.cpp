@@ -9,7 +9,10 @@ void Extractor_DPL::initialize(std::string extractorPath, int extractor_type_)
     extractor_type = extractor_type_;
     env = Ort::Env(ORT_LOGGING_LEVEL_WARNING, "LightGlueDecoupleOnnxRunner Extractor");
     session_options = Ort::SessionOptions();
-    session_options.SetInterOpNumThreads(std::thread::hardware_concurrency());
+    // GPU推理时CPU线程仅负责数据搬运和调度，无需大量线程
+    // When using GPU inference, CPU threads only handle data transfer and scheduling
+    session_options.SetIntraOpNumThreads(1);
+    session_options.SetInterOpNumThreads(1);
     session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
 
     OrtCUDAProviderOptions cuda_options{};
@@ -62,6 +65,10 @@ cv::Mat Extractor_DPL::pre_process(const cv::Mat &Image, float &scale)
 
 std::pair<std::vector<cv::Point2f>, float *> Extractor_DPL::extract_featurepoints(const cv::Mat &image)
 {
+    // 清理上一次调用的 tensor（上一次的 desc 指针此时已不再需要）
+    // Clear previous call's tensor (previous desc pointer is no longer needed)
+    outputtensors.clear();
+
     int InputTensorSize;
     if (extractor_type  == SUPERPOINT)
     {
@@ -115,14 +122,17 @@ std::pair<std::vector<cv::Point2f>, float *> Extractor_DPL::extract_featurepoint
     }
 
     outputtensors.emplace_back(std::move(output_tensor));
-    std::pair<std::vector<cv::Point2f>, float *> result_pts_descriptors = post_process(std::move(outputtensors[0]));
+    // 不移动 tensor，通过引用传递以保持 tensor 内存有效
+    // Pass by reference to keep tensor memory alive (desc pointer validity)
+    std::pair<std::vector<cv::Point2f>, float *> result_pts_descriptors = post_process(outputtensors[0]);
 
-    outputtensors.clear();
+    // 不在此处 clear，tensor 需要保持存活直到调用者复制完描述子数据
+    // Don't clear here - tensor must stay alive until caller finishes copying descriptor data
 
     return result_pts_descriptors;
 }
 
-std::pair<std::vector<cv::Point2f>, float *> Extractor_DPL::post_process(std::vector<Ort::Value> tensor)
+std::pair<std::vector<cv::Point2f>, float *> Extractor_DPL::post_process(std::vector<Ort::Value> &tensor)
 {
     std::pair<std::vector<cv::Point2f>, float *> extractor_result;
     std::vector<int64_t> kpts_Shape = tensor[0].GetTensorTypeAndShapeInfo().GetShape();
@@ -152,7 +162,10 @@ void Matcher_DPL::initialize(std::string matcherPath,int extractor_type_, float 
 
     env = Ort::Env(ORT_LOGGING_LEVEL_WARNING, "LightGlueDecoupleOnnxRunner Matcher");
     session_options = Ort::SessionOptions();
-    session_options.SetInterOpNumThreads(std::thread::hardware_concurrency());
+    // GPU推理时CPU线程仅负责数据搬运和调度，无需大量线程
+    // When using GPU inference, CPU threads only handle data transfer and scheduling
+    session_options.SetIntraOpNumThreads(1);
+    session_options.SetInterOpNumThreads(1);
     session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
 
     // use gpu
@@ -230,16 +243,16 @@ std::vector<std::pair<int, int>> Matcher_DPL::match_featurepoints(std::vector<cv
 
     std::vector<Ort::Value> input_tensors;
     input_tensors.push_back(Ort::Value::CreateTensor<float>(
-        memory_info_handler, kpts0_data, kpts0.size() * 2 * sizeof(float),
+        memory_info_handler, kpts0_data, kpts0.size() * 2,
         InputNodeShapes[0].data(), InputNodeShapes[0].size()));
     input_tensors.push_back(Ort::Value::CreateTensor<float>(
-        memory_info_handler, kpts1_data, kpts1.size() * 2 * sizeof(float),
+        memory_info_handler, kpts1_data, kpts1.size() * 2,
         InputNodeShapes[1].data(), InputNodeShapes[1].size()));
     input_tensors.push_back(Ort::Value::CreateTensor<float>(
-        memory_info_handler, desc0, kpts0.size() * 256 * sizeof(float),
+        memory_info_handler, desc0, kpts0.size() * 256,
         InputNodeShapes[2].data(), InputNodeShapes[2].size()));
     input_tensors.push_back(Ort::Value::CreateTensor<float>(
-        memory_info_handler, desc1, kpts1.size() * 256 * sizeof(float),
+        memory_info_handler, desc1, kpts1.size() * 256,
         InputNodeShapes[3].data(), InputNodeShapes[3].size()));
 
     auto output_tensor = Session->Run(Ort::RunOptions{nullptr}, InputNodeNames.data(), input_tensors.data(),
@@ -257,6 +270,11 @@ std::vector<std::pair<int, int>> Matcher_DPL::match_featurepoints(std::vector<cv
     std::vector<std::pair<int, int>> result_matches = post_process();
 
     outputtensors.clear();
+
+    // 释放 kpts 数据（input_tensors 不拥有数据，需要手动释放）
+    // Free kpts data (input_tensors don't own the data, must free manually)
+    delete[] kpts0_data;
+    delete[] kpts1_data;
 
     return result_matches;
 }

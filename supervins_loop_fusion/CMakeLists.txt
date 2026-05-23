@@ -24,7 +24,7 @@ option(onnxruntime_USE_TENSORRT "Build with TensorRT support" OFF)
 option(LIBPNG_ROOTDIR "libpng root dir")
 option(ONNXRUNTIME_ROOTDIR "onnxruntime root dir")
 
-set(ONNXRUNTIME_ROOTDIR "/home/lhk/Thirdparty/onnxruntime")
+set(ONNXRUNTIME_ROOTDIR "/opt/onnxruntime")
 include_directories("${ONNXRUNTIME_ROOTDIR}/include")
 link_directories("${ONNXRUNTIME_ROOTDIR}/lib")
 
