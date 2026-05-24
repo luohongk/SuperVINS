@@ -48,6 +48,8 @@ add_executable(supervins_loop_fusion_node
     src/pose_graph_node.cpp
     src/pose_graph.cpp
     src/keyframe.cpp
+    src/matcher_dpl.cpp
+    src/transform_dpl.cpp
     src/utility/CameraPoseVisualization.cpp
     src/ThirdParty/DBoW3/src/BowVector.cpp
     src/ThirdParty/DBoW3/src/Database.cpp

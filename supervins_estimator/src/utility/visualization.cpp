@@ -378,7 +378,8 @@ void pubSuperPointDescriptors(Estimator &estimator, std_msgs::Header header)
         ros::Time temp_time(pair.first);
         header.stamp = temp_time;
 
-        sensor_msgs::ImagePtr msg = cv_bridge::CvImage(header, "8UC1", pair.second).toImageMsg();
+        // 使用 32FC1 编码正确传输 float 数据 (N×258: 2列坐标 + 256列描述子)
+        sensor_msgs::ImagePtr msg = cv_bridge::CvImage(header, "32FC1", pair.second).toImageMsg();
         pub_superpoint_descriptors.publish(msg);
     }
 }

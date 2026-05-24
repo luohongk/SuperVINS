@@ -63,6 +63,9 @@ int DEBUG_IMAGE;
 
 string LOOP_PROJECT_SOURCE_DIR;
 
+// LightGlue loop matcher global pointer
+Matcher_DPL* g_loop_matcher = nullptr;
+
 camodocal::CameraPtr m_camera;
 Eigen::Vector3d tic;
 Eigen::Matrix3d qic;
@@ -417,7 +420,11 @@ void process()
                     }
                 }
                 cv_bridge::CvImageConstPtr des_ptr;
-                if (des_msg->encoding == "8UC1")
+                if (des_msg->encoding == "32FC1")
+                {
+                    des_ptr = cv_bridge::toCvCopy(des_msg, "32FC1");
+                }
+                else if (des_msg->encoding == "8UC1")
                 {
                     sensor_msgs::Image des;
                     des.header = des_msg->header;
@@ -434,12 +441,29 @@ void process()
                     des_ptr = cv_bridge::toCvCopy(des_msg, sensor_msgs::image_encodings::MONO8);
                 }
 
-                // 描述子消息拿到了，接下来进行处理
-                // The description sub-message is obtained and will be processed next.
-                cv::Mat descriptors = des_ptr->image;
+                // 解码 (N×258) 数据: 前2列为像素坐标, 后256列为描述子
+                // Decode (N×258) data: first 2 cols = pixel coords, last 256 = descriptors
+                cv::Mat full_data = des_ptr->image;
+                cv::Mat descriptors;
+                vector<cv::Point2f> superpoint_keypoints;
+
+                if (full_data.cols == 258 && full_data.type() == CV_32FC1)
+                {
+                    // 新格式: (N×258)
+                    descriptors = full_data.colRange(2, 258).clone();
+                    for (int i = 0; i < full_data.rows; i++)
+                    {
+                        superpoint_keypoints.push_back(cv::Point2f(full_data.at<float>(i, 0), full_data.at<float>(i, 1)));
+                    }
+                }
+                else
+                {
+                    // 兼容旧格式: (N×256)
+                    descriptors = full_data;
+                }
 
                 KeyFrame *keyframe = new KeyFrame(pose_msg->header.stamp.toSec(), frame_index, T, R, image,
-                                                  point_3d, point_2d_uv, point_2d_normal, point_id, sequence, descriptors);
+                                                  point_3d, point_2d_uv, point_2d_normal, point_id, sequence, descriptors, superpoint_keypoints);
                 m_process.lock();
                 start_flag = 1;
                 // std::cout << "开始增加关键帧" << std::endl;
@@ -525,6 +549,25 @@ int main(int argc, char **argv)
     // 此处加载训练好的词袋模型
     // Load the trained bag-of-words model here
     posegraph.loadVocabulary(vocabulary_file);
+
+    // 加载 LightGlue 匹配模型用于回环验证
+    // Load LightGlue matcher model for loop closure verification
+    std::string matcher_weight_relative_path;
+    fsSettings["matcher_weight_path"] >> matcher_weight_relative_path;
+    float loop_match_threshold = 0.5f;
+    if (!fsSettings["matche_score_threshold"].empty())
+        loop_match_threshold = (float)fsSettings["matche_score_threshold"];
+    if (!matcher_weight_relative_path.empty())
+    {
+        std::string matcher_weight_path = LOOP_PROJECT_SOURCE_DIR + "/" + matcher_weight_relative_path;
+        posegraph.initLightGlueMatcher(matcher_weight_path, loop_match_threshold);
+        g_loop_matcher = posegraph.loop_matcher.get();
+        printf("[LoopFusion] LightGlue matcher loaded: %s (threshold=%.2f)\n", matcher_weight_path.c_str(), loop_match_threshold);
+    }
+    else
+    {
+        printf("[LoopFusion] WARNING: matcher_weight_path not set, falling back to BRIEF matching\n");
+    }
 
     BRIEF_PATTERN_FILE = pkg_path + "/../support_files/brief_pattern.yml";
     cout << "BRIEF_PATTERN_FILE" << BRIEF_PATTERN_FILE << endl;

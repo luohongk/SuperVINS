@@ -10,6 +10,7 @@
  *******************************************************/
 
 #include "keyframe.h"
+#include "matcher_dpl.h"
 
 template <typename Derived>
 static void reduceVector(vector<Derived> &v, vector<uchar> status)
@@ -77,6 +78,38 @@ KeyFrame::KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3
 	computeWindowBRIEFPoint();
 	computeBRIEFPoint();
 	SuperPointDescriptors=descriptors;
+	if (!DEBUG_IMAGE)
+		image.release();
+}
+
+// 新构造函数：带 SuperPoint 关键点坐标（用于 LightGlue 回环匹配）
+KeyFrame::KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3d &_vio_R_w_i, cv::Mat &_image,
+				   vector<cv::Point3f> &_point_3d, vector<cv::Point2f> &_point_2d_uv, vector<cv::Point2f> &_point_2d_norm,
+				   vector<double> &_point_id, int _sequence, cv::Mat descriptors, vector<cv::Point2f> &_superpoint_keypoints)
+{
+	time_stamp = _time_stamp;
+	index = _index;
+	vio_T_w_i = _vio_T_w_i;
+	vio_R_w_i = _vio_R_w_i;
+	T_w_i = vio_T_w_i;
+	R_w_i = vio_R_w_i;
+	origin_vio_T = vio_T_w_i;
+	origin_vio_R = vio_R_w_i;
+	image = _image.clone();
+	cv::resize(image, thumbnail, cv::Size(80, 60));
+	point_3d = _point_3d;
+	point_2d_uv = _point_2d_uv;
+	point_2d_norm = _point_2d_norm;
+	point_id = _point_id;
+	has_loop = false;
+	loop_index = -1;
+	has_fast_point = false;
+	loop_info << 0, 0, 0, 0, 0, 0, 0, 0;
+	sequence = _sequence;
+	superpoint_keypoints = _superpoint_keypoints;
+	computeWindowBRIEFPoint();
+	computeBRIEFPoint();
+	SuperPointDescriptors = descriptors;
 	if (!DEBUG_IMAGE)
 		image.release();
 }
@@ -302,14 +335,13 @@ bool KeyFrame::findConnection(KeyFrame *old_kf)
 	vector<double> matched_id;
 	vector<uchar> status;
 
-	matched_3d = point_3d;
-	matched_2d_cur = point_2d_uv;
-	matched_2d_cur_norm = point_2d_norm;
-	matched_id = point_id;
+	bool use_lightglue = false; // 标记使用的匹配方法 (用于可视化标注)
+	int lightglue_raw_matches = 0; // LightGlue 原始匹配数 (包括无3D对应的)
+	vector<cv::Point2f> all_lg_cur_pts, all_lg_old_pts; // 全部 LightGlue 匹配 (用于可视化)
 
 	TicToc t_match;
 #if 0
-		if (DEBUG_IMAGE)    
+		if (DEBUG_IMAGE)
 	    {
 	        cv::Mat gray_img, loop_match_img;
 	        cv::Mat old_img = old_kf->image;
@@ -333,14 +365,96 @@ bool KeyFrame::findConnection(KeyFrame *old_kf)
 	        cv::imwrite( path.str().c_str(), loop_match_img);
 	    }
 #endif
-	// printf("search by des\n");
-	searchByBRIEFDes(matched_2d_old, matched_2d_old_norm, status, old_kf->brief_descriptors, old_kf->keypoints, old_kf->keypoints_norm);
-	reduceVector(matched_2d_cur, status);
-	reduceVector(matched_2d_old, status);
-	reduceVector(matched_2d_cur_norm, status);
-	reduceVector(matched_2d_old_norm, status);
-	reduceVector(matched_3d, status);
-	reduceVector(matched_id, status);
+
+	// ============================================================
+	// LightGlue matching (SuperPoint descriptors)
+	// If LightGlue matcher is available and both frames have SuperPoint data,
+	// use LightGlue; otherwise fall back to BRIEF matching.
+	// ============================================================
+	if (g_loop_matcher != nullptr &&
+	    !superpoint_keypoints.empty() && !old_kf->superpoint_keypoints.empty() &&
+	    !SuperPointDescriptors.empty() && !old_kf->SuperPointDescriptors.empty())
+	{
+		// Step 1: Normalize keypoints for LightGlue input
+		vector<cv::Point2f> cur_kpts_norm = g_loop_matcher->pre_process(superpoint_keypoints, ROW, COL);
+		vector<cv::Point2f> old_kpts_norm = g_loop_matcher->pre_process(old_kf->superpoint_keypoints, ROW, COL);
+
+		// Step 2: Run LightGlue matching
+		auto lg_matches = g_loop_matcher->match_featurepoints(
+		    cur_kpts_norm, old_kpts_norm,
+		    (float *)SuperPointDescriptors.data,
+		    (float *)old_kf->SuperPointDescriptors.data);
+
+		use_lightglue = true;
+		lightglue_raw_matches = (int)lg_matches.size();
+
+		// Step 3: Build 2D-3D correspondences
+		// For each LightGlue match, find the nearest VIO point in current frame
+		// to establish 3D position for PnP
+		const float NEAREST_PIXEL_THRESH = 15.0f; // pixel distance threshold
+
+		for (auto &match : lg_matches)
+		{
+			cv::Point2f cur_sp_pt = superpoint_keypoints[match.first];
+			cv::Point2f old_sp_pt = old_kf->superpoint_keypoints[match.second];
+
+			// 保存所有 LightGlue 匹配用于可视化
+			// Save all LightGlue matches for visualization
+			all_lg_cur_pts.push_back(cur_sp_pt);
+			all_lg_old_pts.push_back(old_sp_pt);
+
+			// Find nearest VIO tracked point to this SuperPoint keypoint in current frame
+			int nearest_vio_idx = -1;
+			float min_dist = NEAREST_PIXEL_THRESH;
+			for (int i = 0; i < (int)point_2d_uv.size(); i++)
+			{
+				float dx = cur_sp_pt.x - point_2d_uv[i].x;
+				float dy = cur_sp_pt.y - point_2d_uv[i].y;
+				float dist = sqrt(dx * dx + dy * dy);
+				if (dist < min_dist)
+				{
+					min_dist = dist;
+					nearest_vio_idx = i;
+				}
+			}
+
+			if (nearest_vio_idx >= 0)
+			{
+				matched_3d.push_back(point_3d[nearest_vio_idx]);
+				matched_2d_cur.push_back(point_2d_uv[nearest_vio_idx]);
+				matched_2d_cur_norm.push_back(point_2d_norm[nearest_vio_idx]);
+				matched_id.push_back(point_id[nearest_vio_idx]);
+
+				// Old frame 2D point
+				matched_2d_old.push_back(old_sp_pt);
+
+				// Undistort old point to get normalized coordinates
+				Eigen::Vector3d tmp_p;
+				m_camera->liftProjective(Eigen::Vector2d(old_sp_pt.x, old_sp_pt.y), tmp_p);
+				matched_2d_old_norm.push_back(cv::Point2f(tmp_p.x() / tmp_p.z(), tmp_p.y() / tmp_p.z()));
+			}
+		}
+		printf("[LightGlue Loop] raw_matches=%d, with_3D=%d (cur_sp=%d, old_sp=%d, vio=%d)\n",
+		       lightglue_raw_matches, (int)matched_2d_cur.size(),
+		       (int)superpoint_keypoints.size(), (int)old_kf->superpoint_keypoints.size(),
+		       (int)point_2d_uv.size());
+	}
+	else
+	{
+		// Fallback: use BRIEF descriptor matching (original logic)
+		matched_3d = point_3d;
+		matched_2d_cur = point_2d_uv;
+		matched_2d_cur_norm = point_2d_norm;
+		matched_id = point_id;
+
+		searchByBRIEFDes(matched_2d_old, matched_2d_old_norm, status, old_kf->brief_descriptors, old_kf->keypoints, old_kf->keypoints_norm);
+		reduceVector(matched_2d_cur, status);
+		reduceVector(matched_2d_old, status);
+		reduceVector(matched_2d_cur_norm, status);
+		reduceVector(matched_2d_old_norm, status);
+		reduceVector(matched_3d, status);
+		reduceVector(matched_id, status);
+	}
 	// printf("search by des finish\n");
 
 #if 0 
@@ -459,42 +573,90 @@ reduceVector(matched_id, status);
 			cv::hconcat(image, gap_image, gap_image);
 			cv::hconcat(gap_image, old_img, gray_img);
 			cvtColor(gray_img, loop_match_img, CV_GRAY2RGB);
-			for (int i = 0; i < (int)matched_2d_cur.size(); i++)
-			{
-				cv::Point2f cur_pt = matched_2d_cur[i];
-				cv::circle(loop_match_img, cur_pt, 5, cv::Scalar(0, 255, 0));
-			}
-			for (int i = 0; i < (int)matched_2d_old.size(); i++)
-			{
-				cv::Point2f old_pt = matched_2d_old[i];
-				old_pt.x += (COL + gap);
-				cv::circle(loop_match_img, old_pt, 5, cv::Scalar(0, 255, 0));
-			}
-			for (int i = 0; i < (int)matched_2d_cur.size(); i++)
-			{
-				cv::Point2f old_pt = matched_2d_old[i];
-				old_pt.x += (COL + gap);
-				cv::line(loop_match_img, matched_2d_cur[i], old_pt, cv::Scalar(0, 255, 0), 2, 8, 0);
-			}
-			cv::Mat notation(50, COL + gap + COL, CV_8UC3, cv::Scalar(255, 255, 255));
-			putText(notation, "current frame: " + to_string(index) + "  sequence: " + to_string(sequence), cv::Point2f(20, 30), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255), 3);
 
-			putText(notation, "previous frame: " + to_string(old_kf->index) + "  sequence: " + to_string(old_kf->sequence), cv::Point2f(20 + COL + gap, 30), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255), 3);
+			if (use_lightglue)
+			{
+				// ---- LightGlue 可视化 ----
+				// 1) 先画所有 LightGlue 原始匹配 (薄线, 浅青色) 展示匹配密度
+				// Draw ALL LightGlue matches (thin lines, light cyan) to show matching density
+				for (int i = 0; i < (int)all_lg_cur_pts.size(); i++)
+				{
+					cv::Point2f cur_pt = all_lg_cur_pts[i];
+					cv::Point2f old_pt = all_lg_old_pts[i];
+					old_pt.x += (COL + gap);
+					cv::circle(loop_match_img, cur_pt, 3, cv::Scalar(200, 200, 0), 1);
+					cv::circle(loop_match_img, old_pt, 3, cv::Scalar(200, 200, 0), 1);
+					cv::line(loop_match_img, cur_pt, old_pt, cv::Scalar(180, 180, 0), 1, 8, 0);
+				}
+
+				// 2) 再画 PnP inlier 匹配 (粗线, 亮黄色) 高亮有效约束
+				// Draw PnP inliers (thick lines, bright yellow) to highlight valid constraints
+				for (int i = 0; i < (int)matched_2d_cur.size(); i++)
+				{
+					cv::Point2f cur_pt = matched_2d_cur[i];
+					cv::Point2f old_pt = matched_2d_old[i];
+					old_pt.x += (COL + gap);
+					cv::circle(loop_match_img, cur_pt, 5, cv::Scalar(0, 255, 255), -1);
+					cv::circle(loop_match_img, old_pt, 5, cv::Scalar(0, 255, 255), -1);
+					cv::line(loop_match_img, cur_pt, old_pt, cv::Scalar(0, 255, 255), 2, 8, 0);
+				}
+			}
+			else
+			{
+				// ---- BRIEF 可视化 (保持原逻辑) ----
+				for (int i = 0; i < (int)matched_2d_cur.size(); i++)
+				{
+					cv::Point2f cur_pt = matched_2d_cur[i];
+					cv::circle(loop_match_img, cur_pt, 5, cv::Scalar(0, 255, 0));
+				}
+				for (int i = 0; i < (int)matched_2d_old.size(); i++)
+				{
+					cv::Point2f old_pt = matched_2d_old[i];
+					old_pt.x += (COL + gap);
+					cv::circle(loop_match_img, old_pt, 5, cv::Scalar(0, 255, 0));
+				}
+				for (int i = 0; i < (int)matched_2d_cur.size(); i++)
+				{
+					cv::Point2f old_pt = matched_2d_old[i];
+					old_pt.x += (COL + gap);
+					cv::line(loop_match_img, matched_2d_cur[i], old_pt, cv::Scalar(0, 255, 0), 2, 8, 0);
+				}
+			}
+
+			// 标注信息栏: 方法类型 + 帧号 + 匹配统计
+			// Annotation bar: method type + frame info + match statistics
+			cv::Mat notation(80, COL + gap + COL, CV_8UC3, cv::Scalar(40, 40, 40));
+
+			// 第一行: 匹配方法 + 统计
+			string method_str = use_lightglue ? "[LightGlue]" : "[BRIEF]";
+			string match_info;
+			if (use_lightglue)
+				match_info = method_str + " all:" + to_string(lightglue_raw_matches)
+				           + " pnp_inlier:" + to_string((int)matched_2d_cur.size())
+				           + " score:" + to_string(g_loop_matcher->last_avg_match_score).substr(0, 4);
+			else
+				match_info = method_str + " PnP inliers: " + to_string((int)matched_2d_cur.size());
+			cv::Scalar text_color = use_lightglue ? cv::Scalar(0, 255, 255) : cv::Scalar(0, 255, 0);
+			putText(notation, match_info, cv::Point2f(10, 25), cv::FONT_HERSHEY_SIMPLEX, 0.55, text_color, 2);
+
+			// 第二行: 帧号信息
+			string frame_info = "cur:" + to_string(index) + "(seq" + to_string(sequence) + ")"
+			                  + "  loop:" + to_string(old_kf->index) + "(seq" + to_string(old_kf->sequence) + ")";
+			putText(notation, frame_info, cv::Point2f(10, 55), cv::FONT_HERSHEY_SIMPLEX, 0.55, cv::Scalar(200, 200, 200), 1);
+
+			// 第三行 (仅 LightGlue): 特征点数量
+			if (use_lightglue)
+			{
+				string kpt_info = "SP_cur:" + to_string((int)superpoint_keypoints.size())
+				               + " SP_old:" + to_string((int)old_kf->superpoint_keypoints.size())
+				               + " VIO:" + to_string((int)point_2d_uv.size());
+				putText(notation, kpt_info, cv::Point2f(10, 73), cv::FONT_HERSHEY_SIMPLEX, 0.45, cv::Scalar(150, 150, 150), 1);
+			}
+
 			cv::vconcat(notation, loop_match_img, loop_match_img);
 
-			/*
-			ostringstream path;
-			path <<  "/home/tony-ws1/raw_data/loop_image/"
-					<< index << "-"
-					<< old_kf->index << "-" << "3pnp_match.jpg";
-			cv::imwrite( path.str().c_str(), loop_match_img);
-			*/
 			if ((int)matched_2d_cur.size() > MIN_LOOP_NUM)
 			{
-				/*
-				cv::imshow("loop connection",loop_match_img);
-				cv::waitKey(10);
-				*/
 				cv::Mat thumbimage;
 				cv::resize(loop_match_img, thumbimage, cv::Size(loop_match_img.cols / 2, loop_match_img.rows / 2));
 				sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", thumbimage).toImageMsg();

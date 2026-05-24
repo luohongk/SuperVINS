@@ -34,4 +34,8 @@ extern int COL;
 extern std::string VINS_RESULT_PATH;
 extern int DEBUG_IMAGE;
 
+// LightGlue loop matcher (global pointer accessible from KeyFrame::findConnection)
+class Matcher_DPL;
+extern Matcher_DPL* g_loop_matcher;
+
 

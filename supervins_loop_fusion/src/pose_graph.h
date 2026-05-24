@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <ros/ros.h>
 #include "keyframe.h"
+#include "matcher_dpl.h"
 
 #include "utility/tic_toc.h"
 #include "utility/utility.h"
@@ -65,6 +66,7 @@ public:
 	void addKeyFrame(KeyFrame *cur_kf, bool flag_detect_loop);
 	void loadKeyFrame(KeyFrame *cur_kf, bool flag_detect_loop);
 	void loadVocabulary(std::string voc_path);
+	void initLightGlueMatcher(std::string matcher_model_path, float match_threshold);
 
 	DBoW3::Vocabulary initVoc(std::string voc_path);
 	DBoW3::Database initDb(Vocabulary voc);
@@ -83,6 +85,9 @@ public:
 	// world frame( base sequence or first sequence)<----> cur sequence frame
 	Vector3d w_t_vio;
 	Matrix3d w_r_vio;
+
+	// LightGlue matcher for loop closure verification (public for global pointer setup)
+	std::shared_ptr<Matcher_DPL> loop_matcher;
 
 private:
 	int detectLoop(KeyFrame *keyframe, int frame_index);

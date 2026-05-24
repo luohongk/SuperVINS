@@ -97,8 +97,8 @@ docker build -f docker/Dockerfile -t supervins:latest .
 
 ```
 cd ~/catkin_ws  
+source devel/setup.bash
 catkin_make -DCMAKE_BUILD_TYPE=Release
-  source devel/setup.bash
 ```
 
 # 2 Build Project
@@ -187,7 +187,6 @@ catkin_make
 ```
 
 ### 4.5 Run the project
-
 
 source devel/setup.bash
 

@@ -178,30 +178,31 @@ void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1)
     if (_img1.empty())
     {
         // track image with deeplearning methods
-        featureFrame = featureTracker.trackImage_dpl(t, _img); 
+        featureFrame = featureTracker.trackImage_dpl(t, _img);
 
-        // 将描述子保存成为cv::Mat
-        // Save the descriptor as cv::mat
+        // 将关键点坐标和描述子保存为 cv::Mat (N×258): 前2列为像素坐标, 后256列为描述子
+        // Save keypoints + descriptors as cv::Mat (N×258): first 2 cols = pixel coords, last 256 = descriptor
         vector<pair<cv::Point2f, vector<float>>> kptAndDescriptors = featureTracker.cur_dplpts_descriptors;
 
         std::cout << std::fixed << std::setprecision(9) << t << std::endl;
 
-        // 先初始化描述子，cv::Mat形式
-        // First initialize the descriptor, in the form of cv::mat
-        cv::Mat descriptors(kptAndDescriptors.size(), 256, CV_32FC1);
+        cv::Mat descriptors(kptAndDescriptors.size(), 258, CV_32FC1);
 
-        for (int i = 0; i < kptAndDescriptors.size(); i++)
+        for (int i = 0; i < (int)kptAndDescriptors.size(); i++)
         {
+            // 前2列: 像素坐标 (从 DPL 缩放坐标转换)
+            cv::Point2f dplpt = kptAndDescriptors[i].first;
+            float scale = featureTracker.FeatureExtractorDPL->scale;
+            descriptors.at<float>(i, 0) = (dplpt.x + 0.5f) / scale - 0.5f; // pixel x
+            descriptors.at<float>(i, 1) = (dplpt.y + 0.5f) / scale - 0.5f; // pixel y
+            // 后256列: 描述子
             for (int j = 0; j < 256; j++)
             {
-                descriptors.at<float>(i, j) = kptAndDescriptors[i].second[j];
+                descriptors.at<float>(i, j + 2) = kptAndDescriptors[i].second[j];
             }
         }
 
-        pair<double, cv::Mat> superPointDescriptors = make_pair(t, descriptors);
-
-        // 将描述子推送到缓冲区
-        // Push superpoint descriptor to buffer
+        // 将数据推送到缓冲区
         mSuperPointDescriptors.lock();
         SuperPointDescriptorsBuf.push(make_pair(t, descriptors));
         mSuperPointDescriptors.unlock();
@@ -209,24 +210,25 @@ void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1)
 
     else
     {
-        featureFrame = featureTracker.trackImage_dpl(t, _img, _img1); 
+        featureFrame = featureTracker.trackImage_dpl(t, _img, _img1);
 
-        // 如果是双目的话说，也是一样的处理，把数据推送到描述符缓冲区
-        // 将描述子保存成为cv::Mat
+        // 双目同样编码 (N×258): 前2列像素坐标 + 后256列描述子
         vector<pair<cv::Point2f, vector<float>>> kptAndDescriptors = featureTracker.cur_dplpts_descriptors;
 
-        // 先初始化描述子，cv::Mat形式
-        cv::Mat descriptors(kptAndDescriptors.size(), 256, CV_32FC1);
+        cv::Mat descriptors(kptAndDescriptors.size(), 258, CV_32FC1);
 
-        for (int i = 0; i < kptAndDescriptors.size(); i++)
+        for (int i = 0; i < (int)kptAndDescriptors.size(); i++)
         {
+            cv::Point2f dplpt = kptAndDescriptors[i].first;
+            float scale = featureTracker.FeatureExtractorDPL->scale;
+            descriptors.at<float>(i, 0) = (dplpt.x + 0.5f) / scale - 0.5f;
+            descriptors.at<float>(i, 1) = (dplpt.y + 0.5f) / scale - 0.5f;
             for (int j = 0; j < 256; j++)
             {
-                descriptors.at<float>(i, j) = kptAndDescriptors[i].second[j];
+                descriptors.at<float>(i, j + 2) = kptAndDescriptors[i].second[j];
             }
         }
 
-        // 将描述子推送到缓冲区
         mSuperPointDescriptors.lock();
         SuperPointDescriptorsBuf.push(make_pair(t, descriptors));
         mSuperPointDescriptors.unlock();

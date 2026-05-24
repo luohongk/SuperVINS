@@ -64,6 +64,13 @@ void PoseGraph::loadVocabulary(std::string voc_path)
     dpl_db = initDb(dpl_voc);
 }
 
+void PoseGraph::initLightGlueMatcher(std::string matcher_model_path, float match_threshold)
+{
+    loop_matcher = std::make_shared<Matcher_DPL>(1);
+    loop_matcher->initialize(matcher_model_path, LOOP_SUPERPOINT, match_threshold);
+    printf("[PoseGraph] LightGlue loop matcher initialized.\n");
+}
+
 Vocabulary PoseGraph::initVoc(std::string voc_path)
 {
     Vocabulary voc(voc_path);
