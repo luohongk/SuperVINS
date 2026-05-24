@@ -161,18 +161,22 @@ Open **4 terminals** (or use tmux) inside the container:
 
 ```bash
 # Terminal 1: RViz visualization
+cd ~/catkin_ws
 source devel/setup.bash
 roslaunch supervins supervins_rviz.launch
 
 # Terminal 2: VIO front-end
+cd ~/catkin_ws
 source devel/setup.bash
 rosrun supervins supervins_node ~/catkin_ws/src/SuperVINS/config/euroc/euroc_mono_imu_config.yaml
 
 # Terminal 3: Loop fusion
+cd ~/catkin_ws
 source devel/setup.bash
 rosrun supervins_loop_fusion supervins_loop_fusion_node ~/catkin_ws/src/SuperVINS/config/euroc/euroc_mono_imu_config.yaml
 
 # Terminal 4: Play dataset
+cd ~/catkin_ws
 source devel/setup.bash
 rosbag play /data/V2_01_easy.bag
 ```
@@ -225,18 +229,22 @@ catkin_make -DCMAKE_BUILD_TYPE=Release
 
 ```bash
 # Terminal 1: RViz visualization
+cd ~/catkin_ws
 source devel/setup.bash
 roslaunch supervins supervins_rviz.launch
 
 # Terminal 2: VIO front-end
+cd ~/catkin_ws
 source devel/setup.bash
 rosrun supervins supervins_node ~/catkin_ws/src/SuperVINS/config/euroc/euroc_mono_imu_config.yaml
 
 # Terminal 3: Loop fusion
+cd ~/catkin_ws
 source devel/setup.bash
 rosrun supervins_loop_fusion supervins_loop_fusion_node ~/catkin_ws/src/SuperVINS/config/euroc/euroc_mono_imu_config.yaml
 
 # Terminal 4: Play dataset
+cd ~/catkin_ws
 source devel/setup.bash
 rosbag play /data/V2_01_easy.bag
 ```
