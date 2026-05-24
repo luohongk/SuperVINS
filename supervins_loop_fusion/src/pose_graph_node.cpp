@@ -20,6 +20,7 @@
 #include <std_msgs/Bool.h>
 #include <cv_bridge/cv_bridge.h>
 #include <iostream>
+#include <fstream>
 #include <ros/package.h>
 #include <mutex>
 #include <queue>
@@ -81,6 +82,19 @@ Eigen::Vector3d last_t(-100, -100, -100);
 double last_image_time = -1;
 
 ros::Publisher pub_point_cloud, pub_margin_cloud;
+ros::Publisher pub_loop_corrected_path;
+nav_msgs::Path loop_corrected_path;
+std::string LOOP_CORRECTED_PATH_FILE;
+
+// 存储所有原始 VIO 位姿，用于 drift 变化时重建密集轨迹
+// Store all raw VIO poses for rebuilding dense path when drift changes
+struct RawVIOPose {
+    double timestamp;
+    Eigen::Vector3d t;
+    Eigen::Quaterniond q;
+};
+std::vector<RawVIOPose> all_vio_poses;
+std::mutex m_vio_poses;
 
 void new_sequence()
 {
@@ -215,6 +229,18 @@ void vio_callback(const nav_msgs::Odometry::ConstPtr &pose_msg)
     vio_q.y() = pose_msg->pose.pose.orientation.y;
     vio_q.z() = pose_msg->pose.pose.orientation.z;
 
+    // 存储原始 VIO 位姿（未经任何 drift 修正）
+    // Store raw VIO pose (before any drift correction)
+    {
+        RawVIOPose raw;
+        raw.timestamp = pose_msg->header.stamp.toSec();
+        raw.t = vio_t;
+        raw.q = vio_q;
+        m_vio_poses.lock();
+        all_vio_poses.push_back(raw);
+        m_vio_poses.unlock();
+    }
+
     vio_t = posegraph.w_r_vio * vio_t + posegraph.w_t_vio;
     vio_q = posegraph.w_r_vio * vio_q;
 
@@ -232,6 +258,64 @@ void vio_callback(const nav_msgs::Odometry::ConstPtr &pose_msg)
     odometry.pose.pose.orientation.z = vio_q.z();
     odometry.pose.pose.orientation.w = vio_q.w();
     pub_odometry_rect.publish(odometry);
+
+    // 用当前最新的 drift 重建整条密集轨迹并发布
+    // Rebuild entire dense path using current drift and publish
+    Eigen::Matrix3d w_r = posegraph.w_r_vio;
+    Eigen::Vector3d w_t = posegraph.w_t_vio;
+    Eigen::Matrix3d r_d = posegraph.r_drift;
+    Eigen::Vector3d t_d = posegraph.t_drift;
+
+    nav_msgs::Path dense_path;
+    dense_path.header.stamp = pose_msg->header.stamp;
+    dense_path.header.frame_id = "world";
+
+    m_vio_poses.lock();
+    dense_path.poses.reserve(all_vio_poses.size());
+    for (auto &raw : all_vio_poses)
+    {
+        Vector3d t_corrected = w_r * raw.t + w_t;
+        Quaterniond q_corrected(w_r * raw.q.toRotationMatrix());
+        t_corrected = r_d * t_corrected + t_d;
+        q_corrected = Quaterniond(r_d * q_corrected.toRotationMatrix());
+
+        geometry_msgs::PoseStamped ps;
+        ps.header.stamp = ros::Time(raw.timestamp);
+        ps.header.frame_id = "world";
+        ps.pose.position.x = t_corrected.x();
+        ps.pose.position.y = t_corrected.y();
+        ps.pose.position.z = t_corrected.z();
+        ps.pose.orientation.x = q_corrected.x();
+        ps.pose.orientation.y = q_corrected.y();
+        ps.pose.orientation.z = q_corrected.z();
+        ps.pose.orientation.w = q_corrected.w();
+        dense_path.poses.push_back(ps);
+    }
+    m_vio_poses.unlock();
+    pub_loop_corrected_path.publish(dense_path);
+
+    // 保存逐帧位姿到 TUM 格式文件 (用当前最新 drift 对所有帧统一重算, 与橙色轨迹一致)
+    // Save all poses to TUM file using current drift (consistent with orange trajectory)
+    if (!LOOP_CORRECTED_PATH_FILE.empty())
+    {
+        std::ofstream fout(LOOP_CORRECTED_PATH_FILE, std::ios::out);
+        fout << "# timestamp tx ty tz qx qy qz qw" << std::endl;
+        fout.setf(std::ios::fixed, std::ios::floatfield);
+
+        m_vio_poses.lock();
+        for (auto &raw : all_vio_poses)
+        {
+            Vector3d t_c = r_d * (w_r * raw.t + w_t) + t_d;
+            Quaterniond q_c(r_d * (w_r * raw.q.toRotationMatrix()));
+            fout.precision(6);
+            fout << raw.timestamp << " ";
+            fout.precision(7);
+            fout << t_c.x() << " " << t_c.y() << " " << t_c.z() << " "
+                 << q_c.x() << " " << q_c.y() << " " << q_c.z() << " " << q_c.w() << std::endl;
+        }
+        m_vio_poses.unlock();
+        fout.close();
+    }
 
     Vector3d vio_t_cam;
     Quaterniond vio_q_cam;
@@ -592,6 +676,18 @@ int main(int argc, char **argv)
     std::ofstream fout(VINS_RESULT_PATH, std::ios::out);
     fout.close();
 
+    // 设置逐帧 loop-corrected 位姿输出文件 (TUM format: timestamp tx ty tz qx qy qz qw)
+    // Setup per-frame loop-corrected pose output file (TUM format for EVO evaluation)
+    std::string output_path_str;
+    fsSettings["output_path"] >> output_path_str;
+    LOOP_CORRECTED_PATH_FILE = LOOP_PROJECT_SOURCE_DIR + "/" + output_path_str + "/loop_corrected_tum.txt";
+    {
+        std::ofstream fout_lc(LOOP_CORRECTED_PATH_FILE, std::ios::out);
+        fout_lc << "# timestamp tx ty tz qx qy qz qw" << std::endl;
+        fout_lc.close();
+        printf("[LoopFusion] Loop-corrected pose will be saved to: %s\n", LOOP_CORRECTED_PATH_FILE.c_str());
+    }
+
     int USE_IMU = fsSettings["imu"];
     posegraph.setIMUFlag(USE_IMU);
     fsSettings.release();
@@ -627,6 +723,7 @@ int main(int argc, char **argv)
     pub_point_cloud = n.advertise<sensor_msgs::PointCloud>("point_cloud_loop_rect", 1000);
     pub_margin_cloud = n.advertise<sensor_msgs::PointCloud>("margin_cloud_loop_rect", 1000);
     pub_odometry_rect = n.advertise<nav_msgs::Odometry>("odometry_rect", 1000);
+    pub_loop_corrected_path = n.advertise<nav_msgs::Path>("loop_corrected_path", 1000);
 
     std::thread measurement_process;
     std::thread keyboard_command_process;

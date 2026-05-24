@@ -389,51 +389,74 @@ bool KeyFrame::findConnection(KeyFrame *old_kf)
 		lightglue_raw_matches = (int)lg_matches.size();
 
 		// Step 3: Build 2D-3D correspondences
-		// For each LightGlue match, find the nearest VIO point in current frame
-		// to establish 3D position for PnP
-		const float NEAREST_PIXEL_THRESH = 15.0f; // pixel distance threshold
+		// 策略: 双向关联，最大化 PnP 可用点数
+		// Strategy: Bidirectional association to maximize PnP points
+		// 注意: 阈值不能太大，否则会引入系统性几何误差导致轨迹锯齿
+		// Note: threshold must not be too large, or systematic geometric error causes jagged trajectory
+		const float NEAREST_PIXEL_THRESH = 15.0f;
 
+		// 3a) 构建 SuperPoint 点在 current frame 的 LightGlue 匹配索引查找表
+		// Build lookup: cur_sp_idx -> old_sp_idx (from LightGlue matches)
+		std::vector<int> cur_sp_to_old_sp(superpoint_keypoints.size(), -1);
 		for (auto &match : lg_matches)
 		{
-			cv::Point2f cur_sp_pt = superpoint_keypoints[match.first];
-			cv::Point2f old_sp_pt = old_kf->superpoint_keypoints[match.second];
+			cur_sp_to_old_sp[match.first] = match.second;
+		}
 
-			// 保存所有 LightGlue 匹配用于可视化
-			// Save all LightGlue matches for visualization
-			all_lg_cur_pts.push_back(cur_sp_pt);
-			all_lg_old_pts.push_back(old_sp_pt);
+		// 3b) 保存所有 LightGlue 匹配用于可视化
+		for (auto &match : lg_matches)
+		{
+			all_lg_cur_pts.push_back(superpoint_keypoints[match.first]);
+			all_lg_old_pts.push_back(old_kf->superpoint_keypoints[match.second]);
+		}
 
-			// Find nearest VIO tracked point to this SuperPoint keypoint in current frame
-			int nearest_vio_idx = -1;
-			float min_dist = NEAREST_PIXEL_THRESH;
-			for (int i = 0; i < (int)point_2d_uv.size(); i++)
+		// 3c) 主策略: 从每个 VIO 点出发，找最近的 SuperPoint 点，查其 LightGlue 匹配
+		// Main strategy: For each VIO point (has 3D), find nearest SuperPoint keypoint,
+		// check if it has a LightGlue match, and use it for PnP
+		std::vector<bool> vio_used(point_2d_uv.size(), false);
+		std::vector<bool> cur_sp_used(superpoint_keypoints.size(), false);
+
+		for (int vi = 0; vi < (int)point_2d_uv.size(); vi++)
+		{
+			float best_dist = NEAREST_PIXEL_THRESH;
+			int best_sp_idx = -1;
+
+			for (int si = 0; si < (int)superpoint_keypoints.size(); si++)
 			{
-				float dx = cur_sp_pt.x - point_2d_uv[i].x;
-				float dy = cur_sp_pt.y - point_2d_uv[i].y;
+				if (cur_sp_used[si]) continue; // 避免一对多
+				if (cur_sp_to_old_sp[si] < 0) continue; // 没有 LightGlue 匹配的跳过
+
+				float dx = point_2d_uv[vi].x - superpoint_keypoints[si].x;
+				float dy = point_2d_uv[vi].y - superpoint_keypoints[si].y;
 				float dist = sqrt(dx * dx + dy * dy);
-				if (dist < min_dist)
+				if (dist < best_dist)
 				{
-					min_dist = dist;
-					nearest_vio_idx = i;
+					best_dist = dist;
+					best_sp_idx = si;
 				}
 			}
 
-			if (nearest_vio_idx >= 0)
+			if (best_sp_idx >= 0)
 			{
-				matched_3d.push_back(point_3d[nearest_vio_idx]);
-				matched_2d_cur.push_back(point_2d_uv[nearest_vio_idx]);
-				matched_2d_cur_norm.push_back(point_2d_norm[nearest_vio_idx]);
-				matched_id.push_back(point_id[nearest_vio_idx]);
+				int old_sp_idx = cur_sp_to_old_sp[best_sp_idx];
+				cv::Point2f old_sp_pt = old_kf->superpoint_keypoints[old_sp_idx];
 
-				// Old frame 2D point
+				matched_3d.push_back(point_3d[vi]);
+				matched_2d_cur.push_back(point_2d_uv[vi]);
+				matched_2d_cur_norm.push_back(point_2d_norm[vi]);
+				matched_id.push_back(point_id[vi]);
+
 				matched_2d_old.push_back(old_sp_pt);
 
-				// Undistort old point to get normalized coordinates
 				Eigen::Vector3d tmp_p;
 				m_camera->liftProjective(Eigen::Vector2d(old_sp_pt.x, old_sp_pt.y), tmp_p);
 				matched_2d_old_norm.push_back(cv::Point2f(tmp_p.x() / tmp_p.z(), tmp_p.y() / tmp_p.z()));
+
+				vio_used[vi] = true;
+				cur_sp_used[best_sp_idx] = true;
 			}
 		}
+
 		printf("[LightGlue Loop] raw_matches=%d, with_3D=%d (cur_sp=%d, old_sp=%d, vio=%d)\n",
 		       lightglue_raw_matches, (int)matched_2d_cur.size(),
 		       (int)superpoint_keypoints.size(), (int)old_kf->superpoint_keypoints.size(),
@@ -672,19 +695,57 @@ reduceVector(matched_id, status);
 		relative_t = PnP_R_old.transpose() * (origin_vio_T - PnP_T_old);
 		relative_q = PnP_R_old.transpose() * origin_vio_R;
 		relative_yaw = Utility::normalizeAngle(Utility::R2ypr(origin_vio_R).x() - Utility::R2ypr(PnP_R_old).x());
+
+		// 计算平均重投影误差，过滤噪声大的回环
+		// Compute mean reprojection error to reject noisy loop closures
+		double mean_reproj_error = 0.0;
+		if (use_lightglue && (int)matched_2d_old_norm.size() > 0)
+		{
+			// PnP_R_old, PnP_T_old => old camera pose (R_w_c_old, T_w_c_old)
+			Matrix3d R_w_c_old = PnP_R_old;
+			Vector3d T_w_c_old = PnP_T_old;
+			Matrix3d R_c_w = R_w_c_old.transpose();
+			Vector3d t_c = -R_c_w * T_w_c_old;
+
+			double total_error = 0.0;
+			int valid_count = 0;
+			for (int i = 0; i < (int)matched_3d.size(); i++)
+			{
+				// project 3d point to old camera normalized plane
+				Vector3d pw(matched_3d[i].x, matched_3d[i].y, matched_3d[i].z);
+				Vector3d pc = R_c_w * pw + t_c;
+				if (pc.z() < 0.1) continue;
+				double u = pc.x() / pc.z();
+				double v = pc.y() / pc.z();
+				double du = u - matched_2d_old_norm[i].x;
+				double dv = v - matched_2d_old_norm[i].y;
+				total_error += sqrt(du * du + dv * dv);
+				valid_count++;
+			}
+			if (valid_count > 0)
+				mean_reproj_error = total_error / valid_count;
+		}
+
 		// printf("PNP relative\n");
 		// cout << "pnp relative_t " << relative_t.transpose() << endl;
 		// cout << "pnp relative_yaw " << relative_yaw << endl;
-		if (abs(relative_yaw) < 30.0 && relative_t.norm() < 20.0)
-		{
 
+		// 严格验证: yaw < 30°, translation < 20m
+		// Validation: yaw < 30°, translation < 20m
+		// 重投影误差仅作为日志参考，不拒绝回环（避免过严）
+		// Reprojection error is logged for reference only, not used to reject loops
+		bool pose_valid = (abs(relative_yaw) < 30.0 && relative_t.norm() < 20.0);
+
+		if (pose_valid)
+		{
 			has_loop = true;
 			loop_index = old_kf->index;
 			loop_info << relative_t.x(), relative_t.y(), relative_t.z(),
 				relative_q.w(), relative_q.x(), relative_q.y(), relative_q.z(),
 				relative_yaw;
-			// cout << "pnp relative_t " << relative_t.transpose() << endl;
-			// cout << "pnp relative_q " << relative_q.w() << " " << relative_q.vec().transpose() << endl;
+			if (use_lightglue)
+				printf("[LightGlue Loop] ACCEPTED: inliers=%d, reproj_err=%.4f, yaw=%.1f, t=%.2f\n",
+				       (int)matched_2d_cur.size(), mean_reproj_error, relative_yaw, relative_t.norm());
 			return true;
 		}
 	}
