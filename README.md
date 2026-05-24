@@ -67,12 +67,12 @@ Full demo video: [resources/video.mp4](resources/video.mp4)
 
 SuperVINS is a real-time Visual-Inertial SLAM system built upon [VINS-Fusion](https://github.com/HKUST-Aerial-Robotics/VINS-Fusion), replacing traditional handcrafted features with deep-learning-based feature extraction and matching throughout the entire pipeline:
 
-| Module | VINS-Fusion (Original) | SuperVINS |
-|--------|----------------------|-----------|
-| **Feature Extraction** | Shi-Tomasi corners | SuperPoint (learned keypoints + descriptors) |
-| **Feature Matching** | Optical flow (KLT) | LightGlue (learned matcher via ONNX Runtime GPU) |
-| **Loop Detection** | DBoW2 + BRIEF | DBoW3 + SuperPoint descriptors |
-| **Loop Verification** | BRIEF descriptor matching | **SuperPoint + LightGlue matching + PnP RANSAC** |
+| Module                       | VINS-Fusion (Original)    | SuperVINS                                              |
+| ---------------------------- | ------------------------- | ------------------------------------------------------ |
+| **Feature Extraction** | Shi-Tomasi corners        | SuperPoint (learned keypoints + descriptors)           |
+| **Feature Matching**   | Optical flow (KLT)        | LightGlue (learned matcher via ONNX Runtime GPU)       |
+| **Loop Detection**     | DBoW2 + BRIEF             | DBoW3 + SuperPoint descriptors                         |
+| **Loop Verification**  | BRIEF descriptor matching | **SuperPoint + LightGlue matching + PnP RANSAC** |
 
 ### Why "SuperVINS"?
 
@@ -103,12 +103,12 @@ Or manually download [EuRoC MAV Dataset](https://projects.asl.ethz.ch/datasets/d
 ### 🏗️ 1. Build or Pull Docker Image
 
 ```bash
-# Option A: Build from Dockerfile
+# Option A (Recommended): Pull pre-built image (~7.18 GB, CUDA 11.8, Ubuntu 20.04，Noetic)
+docker pull luohongkun0715/supervins:latest
+
+# Option B: Build from Dockerfile (very slow)
 cd SuperVINS
 docker build -f docker/Dockerfile -t supervins:latest .
-
-# Option B: Pull pre-built image (~7.18 GB, CUDA 11.8, Ubuntu 22.04)
-docker pull luohongkun0715/supervins:latest
 ```
 
 ### 🚀 2. Run Container
@@ -130,6 +130,23 @@ docker run -it \
 
 > Replace `<YOUR_SUPERVINS_PATH>` with your local SuperVINS repo path, and `<YOUR_DATA_PATH>` with your dataset directory.
 
+For example:
+
+```bash
+xhost +local:root && \
+docker run -it \
+  --gpus all \
+  --network=host \
+  --privileged \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  -e DISPLAY=$DISPLAY \
+  -v /home/lhk/workspace/SuperVINS:/root/catkin_ws/src/SuperVINS \
+  -v /home/lhk/data:/data \
+  --name supervins_work \
+  -w /root/catkin_ws \
+  supervins:latest
+```
+
 ### 🔨 3. Build Inside Container
 
 ```bash
@@ -144,25 +161,29 @@ Open **4 terminals** (or use tmux) inside the container:
 
 ```bash
 # Terminal 1: RViz visualization
+source devel/setup.bash
 roslaunch supervins supervins_rviz.launch
 
 # Terminal 2: VIO front-end
+source devel/setup.bash
 rosrun supervins supervins_node ~/catkin_ws/src/SuperVINS/config/euroc/euroc_mono_imu_config.yaml
 
 # Terminal 3: Loop fusion
+source devel/setup.bash
 rosrun supervins_loop_fusion supervins_loop_fusion_node ~/catkin_ws/src/SuperVINS/config/euroc/euroc_mono_imu_config.yaml
 
 # Terminal 4: Play dataset
+source devel/setup.bash
 rosbag play /data/V2_01_easy.bag
 ```
 
 ### 🗺️ Trajectory Visualization
 
-| Color | Topic | Description |
-|-------|-------|-------------|
-| Green | `/supervins_estimator/path` | Real-time VIO trajectory (no loop closure) |
+| Color  | Topic                                          | Description                                         |
+| ------ | ---------------------------------------------- | --------------------------------------------------- |
+| Green  | `/supervins_estimator/path`                  | Real-time VIO trajectory (no loop closure)          |
 | Orange | `/supervins_loop_fusion/loop_corrected_path` | Dense loop-corrected trajectory (smooth, per-frame) |
-| Red | `/supervins_loop_fusion/pose_graph_path` | Pose graph optimized keyframe trajectory |
+| Red    | `/supervins_loop_fusion/pose_graph_path`     | Pose graph optimized keyframe trajectory            |
 
 The loop-corrected trajectory is automatically saved in **TUM format** to `<output_path>/loop_corrected_tum.txt` for offline evaluation with [EVO](https://github.com/MichaelGrupp/evo):
 
@@ -176,14 +197,14 @@ evo_ape tum groundtruth.txt loop_corrected_tum.txt -va --plot
 
 ### 📋 Dependencies
 
-| Dependency | Version | Notes |
-|-----------|---------|-------|
-| Ubuntu | 20.04 (64-bit) | |
-| ROS | Noetic | [Installation](http://wiki.ros.org/ROS/Installation) |
-| OpenCV | >= 4.2.0 | `sudo apt-get install libopencv-dev` |
-| Ceres Solver | >= 2.1.0 | [Installation](http://ceres-solver.org/installation.html) |
-| ONNX Runtime | 1.16.3 (GPU) | [Download](https://github.com/microsoft/onnxruntime/releases/download/v1.16.3/onnxruntime-linux-x64-gpu-1.16.3.tgz) |
-| CUDA | >= 11.0 | Required for ONNX Runtime GPU |
+| Dependency   | Version        | Notes                                                                                                            |
+| ------------ | -------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Ubuntu       | 20.04 (64-bit) |                                                                                                                  |
+| ROS          | Noetic         | [Installation](http://wiki.ros.org/ROS/Installation)                                                                |
+| OpenCV       | >= 4.2.0       | `sudo apt-get install libopencv-dev`                                                                           |
+| Ceres Solver | >= 2.1.0       | [Installation](http://ceres-solver.org/installation.html)                                                           |
+| ONNX Runtime | 1.16.3 (GPU)   | [Download](https://github.com/microsoft/onnxruntime/releases/download/v1.16.3/onnxruntime-linux-x64-gpu-1.16.3.tgz) |
+| CUDA         | >= 11.0        | Required for ONNX Runtime GPU                                                                                    |
 
 ### 🏗️ Build Steps
 
@@ -198,25 +219,42 @@ git clone https://github.com/luohongk/SuperVINS.git
 # 3. Build
 cd ~/catkin_ws
 catkin_make -DCMAKE_BUILD_TYPE=Release
+```
 
-# 4. Run (same commands as Docker section above)
+### ▶️ Run
+
+```bash
+# Terminal 1: RViz visualization
 source devel/setup.bash
+roslaunch supervins supervins_rviz.launch
+
+# Terminal 2: VIO front-end
+source devel/setup.bash
+rosrun supervins supervins_node ~/catkin_ws/src/SuperVINS/config/euroc/euroc_mono_imu_config.yaml
+
+# Terminal 3: Loop fusion
+source devel/setup.bash
+rosrun supervins_loop_fusion supervins_loop_fusion_node ~/catkin_ws/src/SuperVINS/config/euroc/euroc_mono_imu_config.yaml
+
+# Terminal 4: Play dataset
+source devel/setup.bash
+rosbag play /data/V2_01_easy.bag
 ```
 
 ### ⚙️ Configuration
 
 Key parameters in config YAML files (e.g., `config/euroc/euroc_mono_imu_config.yaml`):
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `extractor_weight_path` | SuperPoint ONNX model path | `weights_dpl/superpoint.onnx` |
-| `matcher_weight_path` | LightGlue ONNX model path | `weights_dpl/superpoint_lightglue_fused.onnx` |
-| `matche_score_threshold` | LightGlue match confidence threshold | `0.5` |
-| `voc_relative_path` | DBoW3 vocabulary path for loop detection | `ThirdParty/Voc/superpoint1.yml.gz` |
+| Parameter                  | Description                              | Default                                         |
+| -------------------------- | ---------------------------------------- | ----------------------------------------------- |
+| `extractor_weight_path`  | SuperPoint ONNX model path               | `weights_dpl/superpoint.onnx`                 |
+| `matcher_weight_path`    | LightGlue ONNX model path                | `weights_dpl/superpoint_lightglue_fused.onnx` |
+| `matche_score_threshold` | LightGlue match confidence threshold     | `0.5`                                         |
+| `voc_relative_path`      | DBoW3 vocabulary path for loop detection | `ThirdParty/Voc/superpoint1.yml.gz`           |
 
 Path configuration in CMakeLists.txt (`supervins_estimator`, `supervins_loop_fusion`, `camera_models`):
 
-```bash
+```cmake
 set(ONNXRUNTIME_ROOTDIR "<your_onnxruntime_path>")
 find_package(Ceres REQUIRED PATHS "<your_ceres_path>")
 ```
