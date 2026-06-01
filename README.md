@@ -302,7 +302,12 @@ SuperVINS is built upon the following outstanding open-source projects:
 - [LightGlue-OnnxRunner](https://github.com/OroChippw/LightGlue-OnnxRunner) — ONNX deployment reference
 - [DBoW3](https://github.com/rmsalinas/DBow3) — Bag-of-Words loop detection
 
-We thank the [Wuhan University BRAIN Lab](https://www.zhiyuteam.com/) for supporting this project.
+We also gratefully acknowledge the following community projects for actively testing, extending, and demonstrating SuperVINS. Feel free to reach out to their authors for related questions:
+
+- [DR-VINS](https://github.com/jzk0406/DR-VINS) — A community extension of SuperVINS
+  - Additional demos and visualizations: [release demos](https://github.com/jzk0406/DR-VINS/releases/tag/v1.0-demo) · [trajectory figures](https://github.com/jzk0406/DR-VINS/tree/main/results/trajectory_figures)
+
+Finally, we thank the [Wuhan University BRAIN Lab](https://www.zhiyuteam.com/) for supporting this project.
 
 ---
 
