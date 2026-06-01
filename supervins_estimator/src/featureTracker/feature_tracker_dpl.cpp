@@ -189,6 +189,22 @@ void FeatureTrackerDPL::match_features_dpl(cv::Mat prev_img_, cv::Mat cur_img_, 
     vector<pair<int, int>> tem_matches;
     tem_matches = FeatureMatcherDPL->match_featurepoints(prev_dplpts_normalized, cur_dplpts_normalized, prev_descriptors.data(), cur_descriptors.data());
 
+    // ============================================================
+    // F-RANSAC 几何过滤开关。
+    // 实测(EuRoC MH01, evo APE rmse):
+    //   不过滤        = 0.030
+    //   3px F-RANSAC  = 0.071   ← 当前启用：牺牲少量精度换取剔除大投影误差外点的鲁棒性
+    //   1px F-RANSAC  = 0.226   ← 阈值过严会误杀 LightGlue 正确匹配，禁用
+    // 阈值由 ransacReprojThreshold 控制(去畸变像素, focal=460)，代码下限保护为 3px。
+    // 若想完全信任 LightGlue、关闭过滤，将 USE_F_RANSAC 置为 false。
+    // ============================================================
+    static const bool USE_F_RANSAC = true;
+    if (!USE_F_RANSAC)
+    {
+        result_matches = tem_matches;
+        return;
+    }
+
     if (tem_matches.size() < 8)
     {
         result_matches = tem_matches;
@@ -222,9 +238,12 @@ void FeatureTrackerDPL::match_features_dpl(cv::Mat prev_img_, cv::Mat cur_img_, 
 
     double avg_displacement = total_displacement / tem_matches.size();
 
-    // RANSAC 阈值从配置文件读取 (ransacReprojThreshold)，可按数据集调节
-    // RANSAC threshold loaded from config file, adjustable per dataset
-    const double DPL_F_THRESHOLD = ransacReprojThreshold;
+    // RANSAC 阈值从配置文件读取 (ransacReprojThreshold)，单位为去畸变像素 (focal=460)。
+    // 注意：该 F-RANSAC 仅作为「松保护」剔除粗大外点，阈值不宜过严，否则会误杀
+    // LightGlue 的正确匹配（实验 EuRoC MH01：1px→APE0.226，3px→0.071，不过滤→0.030）。
+    // 阈值完全由配置决定(所见即所得)；仅当读到非正值(配置缺失)时兜底为 1.0。
+    // RANSAC threshold fully controlled by config; only falls back to 1.0 if missing/non-positive.
+    double DPL_F_THRESHOLD = (ransacReprojThreshold > 1e-6) ? ransacReprojThreshold : 1.0;
 
     std::vector<uchar> inliersMask;
     cv::Mat fundamentalMatrix = cv::findFundamentalMat(un_prev_pts, un_cur_pts, cv::FM_RANSAC, DPL_F_THRESHOLD, 0.99, inliersMask);
@@ -339,6 +358,14 @@ void FeatureTrackerDPL::match_with_predictions_dpl(cv::Mat prev_img_, cv::Mat cu
 
     vector<pair<int, int>> matches = FeatureMatcherDPL->match_featurepoints(prev_dplpts_normalized, cur_dplpts_normalized, prev_descriptors.data(), cur_descriptors.data());
 
+    // 启用 F-RANSAC 过滤（理由见 match_features_dpl）
+    static const bool USE_F_RANSAC = true;
+    if (!USE_F_RANSAC)
+    {
+        result_matches = matches;
+        return;
+    }
+
     if (matches.size() < 8)
     {
         result_matches = matches;
@@ -371,7 +398,8 @@ void FeatureTrackerDPL::match_with_predictions_dpl(cv::Mat prev_img_, cv::Mat cu
     }
 
     double avg_displacement = total_displacement / matches.size();
-    const double DPL_F_THRESHOLD = ransacReprojThreshold;
+    // 阈值完全由配置决定(所见即所得)，仅在非正值时兜底为 1.0，详见 match_features_dpl 注释
+    double DPL_F_THRESHOLD = (ransacReprojThreshold > 1e-6) ? ransacReprojThreshold : 1.0;
 
     std::vector<uchar> inliersMask;
     cv::Mat fundamentalMatrix = cv::findFundamentalMat(un_prev_pts, un_cur_pts, cv::FM_RANSAC, DPL_F_THRESHOLD, 0.99, inliersMask);

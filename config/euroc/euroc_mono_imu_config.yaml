@@ -35,14 +35,14 @@ multiple_thread: 1
 max_cnt: 150
 
 # min distance between two features 
-min_dist: 10
+min_dist: 20
 
 #matcher parameters
-matche_score_threshold: 0.7
-ransacReprojThreshold: 1.0
+matche_score_threshold: 1.0
+ransacReprojThreshold: 3.0
 
 freq: 10                # frequence (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequence will be same as raw image 
-F_threshold: 1.0        # ransac threshold (pixel)
+F_threshold: 1        # ransac threshold (pixel)
 show_track: 1           # publish tracking image as topic
 flow_back: 1            # perform forward and backward optical flow to improve feature tracking accuracy
 
@@ -59,7 +59,7 @@ gyr_w: 0.0001       # gyroscope bias random work noise standard deviation.
 g_norm: 9.81007     # gravity magnitude
 
 #unsynchronization parameters
-estimate_td: 0                      # online estimate time offset between camera and imu
+estimate_td: 1                      # online estimate time offset between camera and imu
 td: 0.0                             # initial value of time offset. unit: s. readed image clock + td = real image clock (IMU clock)
 
 # Path to vio output results

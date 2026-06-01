@@ -151,8 +151,9 @@ docker run -it \
 
 ```bash
 cd ~/catkin_ws
+source /opt/ros/noetic/setup.bash
 source devel/setup.bash
-catkin_make -DCMAKE_BUILD_TYPE=Release
+catkin_make -DCMAKE_BUILD_TYPE=Release -j8
 ```
 
 ### ▶️ 4. Run

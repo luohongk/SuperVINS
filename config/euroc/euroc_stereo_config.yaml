@@ -41,6 +41,10 @@ body_T_cam1: !!opencv-matrix
 #Multiple thread support
 multiple_thread: 1
 
+#matcher parameters
+matche_score_threshold: 0.7
+ransacReprojThreshold: 1.0
+
 #feature traker paprameters
 max_cnt: 150            # max feature number in feature tracking
 min_dist: 15            # min distance between two features 
@@ -55,6 +59,8 @@ max_num_iterations: 8   # max solver itrations, to guarantee real time
 keyframe_parallax: 10.0 # keyframe selection threshold (pixel)
 
 #deep learning feature points weights
-extractor_weight_path: "/home/lhk/catkin_ws/src/VINS-Fusion-LightGlue/vins_estimator/weights_dpl/superpoint.onnx"
-matcher_weight_path: "/home/lhk/catkin_ws/src/VINS-Fusion-LightGlue/vins_estimator/weights_dpl/superpoint_lightglue_fused_cpu.onnx" 
-matche_score_threshold: 0.5
+extractor_weight_path: "SuperVINS/supervins_estimator/weights_dpl/superpoint.onnx"
+matcher_weight_path: "SuperVINS/supervins_estimator/weights_dpl/superpoint_lightglue_fused.onnx" 
+
+# Bag of Words path
+voc_relative_path: "SuperVINS/supervins_loop_fusion/src/ThirdParty/Voc/superpoint1.yml.gz" 
