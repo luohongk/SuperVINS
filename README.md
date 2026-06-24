@@ -305,9 +305,9 @@ SuperVINS is built upon the following outstanding open-source projects:
 
 We also gratefully acknowledge the following community projects for actively testing, extending, and demonstrating SuperVINS. Feel free to reach out to their authors for related questions:
 
-- **[DR-VINS](https://github.com/jzk0406/DR-VINS)** — A community extension of SuperVINS optimized for degraded visual scenes (low texture, illumination change, overexposure, indoor-outdoor transition)
+- **[DR-VINS](https://github.com/jzk0406/DR-VINS)** — A community extension of SuperVINS tested for degraded visual scenes (low texture, illumination change, overexposure, indoor-outdoor transition)
   - Additional demos and visualizations: [release demos](https://github.com/jzk0406/DR-VINS/releases/tag/v1.0-demo) · [trajectory figures](https://github.com/jzk0406/DR-VINS/tree/main/results/trajectory_figures)
-- **[SuperVINS ROS2](https://github.com/vanstrong12138/SuperVINS)**— ROS 2 implementation of SuperVINS with Docker deployment support
+- **[SuperVINS ROS2](https://github.com/vanstrong12138/SuperVINS)**— ROS 2 implementation of SuperVINS
 - **[AdaptiveVINS](https://github.com/alexanderbowler/AdaptiveVINS.git)** — An adaptive visual-inertial odometry extension built upon SuperVINS and VINS-Fusion, which adaptively fuses classical optical flow front-end and deep learning-based front-end to balance localization accuracy and computational overhead
 - **[SuperVINS (Webots Adapted)](https://github.com/liuming706/SuperVINS)**— A customized fork fully adapted for Webots robot simulation, with revised camera models, simulation configs and dedicated compilation scripts
 
