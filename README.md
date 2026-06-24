@@ -307,6 +307,7 @@ We also gratefully acknowledge the following community projects for actively tes
 
 - [DR-VINS](https://github.com/jzk0406/DR-VINS) — A community extension of SuperVINS
   - Additional demos and visualizations: [release demos](https://github.com/jzk0406/DR-VINS/releases/tag/v1.0-demo) · [trajectory figures](https://github.com/jzk0406/DR-VINS/tree/main/results/trajectory_figures)
+- [SuperVINS ROS2](https://github.com/vanstrong12138/SuperVINS) — ROS2 implementation of SuperVINS
 
 Finally, we thank the [Wuhan University BRAIN Lab](https://www.zhiyuteam.com/) for supporting this project.
 
