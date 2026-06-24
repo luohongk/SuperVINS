@@ -1,169 +1,563 @@
-<!--
- * @Author: Hongkun Luo
- * @Date: 2024-10-23 23:04:56
- * @LastEditors: Hongkun Luo
- * @Description: 
- * 
- * Hongkun Luo
--->
-<html>
+<!DOCTYPE html>
+<html lang="en">
 
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <title>SuperVINS: A Robust Real-Time Visual-Inertial SLAM Framework for Challenging Imaging Conditions</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SuperVINS: A real-time visual-inertial SLAM framework for challenging imaging conditions.">
+  <title>SuperVINS: A Real-Time Visual-Inertial SLAM Framework</title>
   <link href="./SuperVINS/style.css" rel="stylesheet">
-  <script type="text/javascript" src="./SuperVINS/jquery.mlens-1.0.min.js"></script>
-  <script type="text/javascript" src="./SuperVINS/jquery.js"></script>
-  <style>
-    .divider {
-      border-right: 2px dashed #737373;
-      width: 2px;
-    }
-  </style>
-  <style>
-    .divider_horizontal {
-      border-top: 2px dashed #737373;
-      display: block;
-      width: 100%;
-      margin: 10px 0;
-    }
-    .image-container {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-    .image-container img {
-            max-width: 45%;
-            margin: 5px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-  </style>
-  
 </head>
 
 <body>
-  <div class="content">
-    <h1><strong>SuperVINS: A Real-Time Visual-Inertial SLAM Framework for Challenging Imaging Conditions</strong>
-    </h1>
-    <p id="authors">
-      <span class="conference">IEEE Senosrs Journal(JSEN)</span><br>
-      <span>
-        <a href="http://luohongkun.com/">Hongkun Luo<sup>1</sup></a>
-      </span>
-      <span>
-        <a href="">Yang Liu<sup>2</sup></a>
-      </span>
-      <span>
-        <a href="https://jszy.whu.edu.cn/guochi">Chi Guo<sup>3*</sup></a>
-      </span>
-      <span>
-        <a href="https://cesi.cumt.edu.cn/info/1101/8625.htm">Zengke Li<sup>4</sup></a>
-      </span>
-      <span>
-        <a href="http://gpscenter.whu.edu.cn/ryDetail.shtml?id=20180705091739904omo4VDDYG4ccA">Weiwei Song<sup>5</sup></a>
-      </span>
-      <br>
-      <span class="institution">
-        <a href="https://en.whu.edu.cn/"><sup>1</sup> Wuhan University</a> 
-        <a href="https://www.cumt.edu.cn/"><sup>2</sup> China University of Mining and Technology</a> <br>
-        <sup>*</sup> represents the corresponding author. &nbsp;&nbsp; 
-    </p>
+  <header class="site-header" aria-label="Primary navigation">
+    <a class="brand" href="#top">SuperVINS</a>
+    <nav class="nav-links" aria-label="Page sections">
+      <a href="#framework">Framework</a>
+      <a href="#visualization">Visualization</a>
+      <a href="#abstract">Abstract</a>
+      <a href="#results">Results</a>
+      <a href="#citation">Citation</a>
+    </nav>
+  </header>
 
-    <font size="+2">
-      <p style="text-align: center;">
-        <a href="https://ieeexplore.ieee.org/document/10949688" target="_blank">[Paper]</a> &nbsp;&nbsp;&nbsp;&nbsp;
-        <a href="https://github.com/luohongk/SuperVINS" target="_blank">[Code]</a>&nbsp;&nbsp;&nbsp;&nbsp;
-        <!-- <a href="SuperVINS/bibtex.txt" target="_blank">[BibTeX]</a> -->
-      </p>
-    </font>
-    
-    <h3>
-      <center>SuperVINS framework</center>
-    </h3>
-    <div class="image-container">
-      <img src="./image/SuperVINS.png" alt="SuperVINS framework">
-      <img src="./image/abstract.png" alt="Real-time test of feature extraction and matching in SuperVINS">
-    </div>
-    <a style="text-align:center">
-      SuperVINS is a visual-inertial SLAM framework that <strong> integrates deep learning features</strong> based on VINS-Fusion. It has the characteristics of high accuracy and high robustness.</a>
-  
-    <div id="contentWrapper">
-      <!-- <button id="prevButton" onclick="prevPage()">&#8249;</button> -->
-      <div id="gif-display"></div>
-      <!-- <button id="nextButton" onclick="nextPage()">&#8250;</button> -->
-    </div>
-    <!-- <div id="navBar"> -->
-      <!-- <div class="navDot" id="dot0" onclick="goToPage(0)"></div> -->
-      <!-- <div class="navDot" id="dot1" onclick="goToPage(1)"></div> -->
-    <!-- </div> -->
-  </div>
-  <style>
-    #gif-display {
-        text-align: center; /* 使内容居中 */
-    }
-    .summary-img {
-        max-width: 100%; /* 限制图像最大宽度 */
-        height: auto;    /* 保持图像比例 */
-    }
-</style>
-
-<div id="gif-display"></div>
-
-<script>
-    // 只列出一个图像文件
-    var allFiles = [
-        "SuperVINS.gif"
-    ];
-
-    function showPage() {
-        // 构建 HTML 字符串以显示该图像
-        var htmlStr = '<h3><center>Visualization results of SuperVINS experiments on UMA-VI dataset</center></h3> \
-        <p>This experiment is conducted on the Ubuntu 20.04 operating system, utilizing a GeForce RTX 2060 graphics card with NVIDIA driver version 530.41.03, and ROS neotic. Additionally, the system is configured with CUDA 11.7, CUDNN 8.9.6, and ONNX Runtime 1.16.3 to enable inference of deep learning models. To demonstrate the advantages of the improved algorithm, we employ the well-known public EuRoC dataset for our experiments. The system uses a re-trained deep learning-based Bag-of-Words model. To ensure comprehensive coverage of various scenarios, we expand the training dataset to include a hybrid set comprising the EuRoC, TUM, and KITTI datasets. \
-        </p><table style="margin: 0 auto;"><tr><td><img class="summary-img" src="./gif_cropped/' + allFiles[0] + '" style="width:100%;"></td></tr></table>';
-        
-        // 将图像添加到 id 为 'gif-display' 的 div 中
-        document.getElementById('gif-display').innerHTML = htmlStr;
-    }
-
-    // 运行时显示图像
-    showPage();
-</script>
-
-  <div class="content">
-    <h2 style="text-align:center;">Abstract</h2>
-    <p>There is an increasing emphasis on achieving high accuracy and robustness in SLAM systems. The traditional visual-inertial SLAM system often struggles with stability under low-light or dynamic illumination, leading to the potential lost of trajectory tracking. High accuracy and robustness are crucial for ensuring the long-term stability and reliable localization performance of SLAM systems. To address the challenges of improving robustness and accuracy in visual-inertial SLAM, this paper proposes SuperVINS, a real-time visual-inertial SLAM framework designed for challenging imaging conditions. In contrast to geometric modeling, deep learning-based features are capable of fully leveraging the implicit information present in images, which is often not captured by geometric features. Therefore, SuperVINS, developed as an enhancement of VINS-Fusion, integrates the deep learning neural network model SuperPoint for feature point extraction and loop closure detection. At the same time, a deep learning neural network LightGlue model for associating feature points is integrated into front-end feature matching. We employed the RANSAC algorithm for matching enhancement to improve robustness against outliers. Additionally, SuperVINS enables flexibly integrated environment-specific SuperPoint bag-of-words models for improved loop closure detection. The system enables real-time localization and mapping. Experimental validation on the well-known EuRoC and UMA-VI datasets demonstrates that SuperVINS achieves comparable accuracy and robustness to other state-of-the-art visual-inertial SLAM systems, particularly in the most challenging sequences. This paper analyzes the advantages of SuperVINS in terms of accuracy, real-time performance, and robustness. To foster knowledge exchange in the field, we have publicly released the code associated with this paper. The code is available at: https://github.com/luohongk/SuperVINS.</p>
-  </div>
-
-  <div class="content">
-    <h2>Experimental Results</h2>
-    <!-- <video width="100%" controls autoplay control src="freereg/freereg.mp4" ></video> -->
-    <div class="text-center">
-      <div style="text-align: center;">
-        <img src="./image/guiji1.png" alt="Image 1" style="width: 80%; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;">
-        <img src="./image/guiji2.png" alt="Image 2" style="width: 80%; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;">
-        <img src="./image/guiji3.png" alt="Image 3" style="width: 80%; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;">
+  <main id="top">
+    <section class="hero-band" aria-labelledby="project-title">
+      <div class="hero-visual" aria-hidden="true">
+        <img src="./image/SuperVINS.png" alt="">
       </div>
-    </div>
-  </div>
+      <div class="hero-overlay"></div>
 
-  <div class="content">
-    <h3>BibTeX</h3>
-    <code>
-@article{luo2025supervins,<br>
-&nbsp;&nbsp;title={SuperVINS: A Real-Time Visual-Inertial SLAM Framework for Challenging Imaging Conditions},<br>
-&nbsp;&nbsp;author={Luo, Hongkun and Liu, Yang and Guo, Chi and Li, Zengke and Song, Weiwei},<br>
-&nbsp;&nbsp;journal={IEEE Sensors Journal},<br>
-&nbsp;&nbsp;year={2025},<br>
-&nbsp;&nbsp;publisher={IEEE}<br>
-}
-    </code>
-</div>
-  <div class="content" id="acknowledgements">
-    <p><strong>Acknowledgements</strong>:
-      We borrow this template from <a href="https://sd-complements-dino.github.io/">A-tale-of-two-features</a>.
-    </p>
-  </div>
+      <div class="hero-inner">
+        <p class="venue">IEEE Sensors Journal</p>
+        <h1 id="project-title">SuperVINS</h1>
+        <p class="hero-subtitle">A Real-Time Visual-Inertial SLAM Framework for Challenging Imaging Conditions</p>
+
+        <div class="authors" aria-label="Authors">
+          <a href="http://luohongkun.com/">Hongkun Luo<sup>1</sup></a>
+          <span>Yang Liu<sup>2</sup></span>
+          <a href="https://jszy.whu.edu.cn/guochi">Chi Guo<sup>3*</sup></a>
+          <a href="https://cesi.cumt.edu.cn/info/1101/8625.htm">Zengke Li<sup>4</sup></a>
+          <a href="http://gpscenter.whu.edu.cn/ryDetail.shtml?id=20180705091739904omo4VDDYG4ccA">Weiwei Song<sup>5</sup></a>
+        </div>
+
+        <p class="institutions">
+          <a href="https://en.whu.edu.cn/"><sup>1</sup> Wuhan University</a>
+          <a href="https://www.cumt.edu.cn/"><sup>2</sup> China University of Mining and Technology</a>
+          <span><sup>*</sup> Corresponding author</span>
+        </p>
+
+        <div class="action-row" aria-label="Project links">
+          <a class="button primary" href="https://ieeexplore.ieee.org/document/10949688" target="_blank" rel="noopener">Paper</a>
+          <a class="button secondary" href="https://github.com/luohongk/SuperVINS" target="_blank" rel="noopener">Code</a>
+        </div>
+      </div>
+
+      <div class="signal-strip" aria-label="Project highlights">
+        <div>
+          <span>Deep features</span>
+          <strong>SuperPoint and LightGlue</strong>
+        </div>
+        <div>
+          <span>Backbone</span>
+          <strong>VINS-Fusion inspired pipeline</strong>
+        </div>
+        <div>
+          <span>Focus</span>
+          <strong>Low-light and dynamic illumination</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="band architecture-band" id="framework" aria-labelledby="framework-heading">
+      <div class="inner">
+        <div class="section-heading">
+          <p class="eyebrow">Framework</p>
+          <h2 id="framework-heading">Visual-inertial SLAM with learned front-end matching and loop closure</h2>
+        </div>
+        <figure class="architecture-figure">
+          <img src="./image/SuperVINS.png" alt="SuperVINS framework overview">
+        </figure>
+      </div>
+    </section>
+
+    <section class="band method-band" aria-labelledby="method-heading">
+      <div class="inner method-layout">
+        <div class="method-copy">
+          <p class="eyebrow">Method</p>
+          <h2 id="method-heading">Robust perception for difficult imaging conditions</h2>
+          <p>
+            SuperVINS enhances VINS-Fusion with neural feature extraction, learned feature association, RANSAC-based match refinement, and environment-specific bag-of-words loop closure.
+          </p>
+        </div>
+
+        <div class="feature-grid">
+          <article>
+            <span>01</span>
+            <h3>SuperPoint extraction</h3>
+            <p>Deep feature points improve tracking stability when illumination and texture are unreliable.</p>
+          </article>
+          <article>
+            <span>02</span>
+            <h3>LightGlue matching</h3>
+            <p>Learned association strengthens the front end before geometric verification.</p>
+          </article>
+          <article>
+            <span>03</span>
+            <h3>Loop closure retrieval</h3>
+            <p>Retrained SuperPoint bag-of-words models support long-term consistency.</p>
+          </article>
+          <article>
+            <span>04</span>
+            <h3>Real-time deployment</h3>
+            <p>The system targets online localization and mapping with GPU inference support.</p>
+          </article>
+        </div>
+      </div>
+
+      <div class="inner">
+        <figure class="summary-figure">
+          <img src="./image/abstract.png" alt="SuperVINS localization, mapping, feature extraction, and matching summary">
+        </figure>
+      </div>
+    </section>
+
+    <section class="band visualization-band" id="visualization" aria-labelledby="visualization-heading">
+      <div class="inner visualization-layout">
+        <div class="section-heading">
+          <p class="eyebrow">Visualization</p>
+          <h2 id="visualization-heading">UMA-VI experiment playback</h2>
+          <p>
+            The experiment runs on Ubuntu 20.04 with an RTX 2060 GPU, CUDA 11.7, CUDNN 8.9.6, ONNX Runtime 1.16.3, and ROS Noetic.
+          </p>
+        </div>
+        <figure class="demo-figure">
+          <img src="./gif_cropped/SuperVINS.gif" alt="Visualization results of SuperVINS experiments on the UMA-VI dataset">
+        </figure>
+      </div>
+    </section>
+
+    <section class="band abstract-band" id="abstract" aria-labelledby="abstract-heading">
+      <div class="inner abstract-layout">
+        <div class="section-heading">
+          <p class="eyebrow">Paper</p>
+          <h2 id="abstract-heading">Abstract</h2>
+        </div>
+        <p class="abstract-text">
+          There is an increasing emphasis on achieving high accuracy and robustness in SLAM systems. The traditional visual-inertial SLAM system often struggles with stability under low-light or dynamic illumination, leading to the potential loss of trajectory tracking. High accuracy and robustness are crucial for ensuring the long-term stability and reliable localization performance of SLAM systems. To address the challenges of improving robustness and accuracy in visual-inertial SLAM, this paper proposes SuperVINS, a real-time visual-inertial SLAM framework designed for challenging imaging conditions. In contrast to geometric modeling, deep learning-based features are capable of fully leveraging the implicit information present in images, which is often not captured by geometric features. Therefore, SuperVINS, developed as an enhancement of VINS-Fusion, integrates the deep learning neural network model SuperPoint for feature point extraction and loop closure detection. At the same time, a deep learning neural network LightGlue model for associating feature points is integrated into front-end feature matching. We employed the RANSAC algorithm for matching enhancement to improve robustness against outliers. Additionally, SuperVINS enables flexibly integrated environment-specific SuperPoint bag-of-words models for improved loop closure detection. The system enables real-time localization and mapping. Experimental validation on the well-known EuRoC and UMA-VI datasets demonstrates that SuperVINS achieves comparable accuracy and robustness to other state-of-the-art visual-inertial SLAM systems, particularly in the most challenging sequences. This paper analyzes the advantages of SuperVINS in terms of accuracy, real-time performance, and robustness. To foster knowledge exchange in the field, we have publicly released the code associated with this paper.
+        </p>
+      </div>
+    </section>
+
+    <section class="band results-band" id="results" aria-labelledby="results-heading">
+      <div class="inner">
+        <div class="section-heading centered">
+          <p class="eyebrow">Evaluation</p>
+          <h2 id="results-heading">Experimental Results</h2>
+        </div>
+        <div class="table-grid" aria-label="Quantitative experiment results">
+          <article class="table-panel">
+            <div class="table-title">
+              <p>ATE Comparison</p>
+              <h3>Six algorithms on EuRoC, Mono + IMU</h3>
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Dataset</th>
+                    <th>OKVIS</th>
+                    <th>VINS-Mono<br>Noloop</th>
+                    <th>VINS-Mono<br>Loop</th>
+                    <th>VINS-Fusion<br>Noloop</th>
+                    <th>VINS-Fusion<br>Loop</th>
+                    <th>SuperVINS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th>MH01</th>
+                    <td>0.3300</td>
+                    <td>0.1556</td>
+                    <td class="second">0.0868</td>
+                    <td>0.1377</td>
+                    <td>0.0911</td>
+                    <td class="best">0.0867</td>
+                  </tr>
+                  <tr>
+                    <th>MH02</th>
+                    <td>0.3700</td>
+                    <td>0.1780</td>
+                    <td>0.1083</td>
+                    <td>0.1002</td>
+                    <td class="best">0.0457</td>
+                    <td class="second">0.0970</td>
+                  </tr>
+                  <tr>
+                    <th>MH03</th>
+                    <td>0.2500</td>
+                    <td>0.1950</td>
+                    <td class="best">0.0658</td>
+                    <td>0.1203</td>
+                    <td class="second">0.0919</td>
+                    <td>0.1806</td>
+                  </tr>
+                  <tr>
+                    <th>MH04</th>
+                    <td>0.2700</td>
+                    <td>0.3470</td>
+                    <td>0.2047</td>
+                    <td>0.2836</td>
+                    <td class="best">0.1307</td>
+                    <td class="second">0.1708</td>
+                  </tr>
+                  <tr>
+                    <th>MH05</th>
+                    <td>0.3900</td>
+                    <td>0.3020</td>
+                    <td>0.1421</td>
+                    <td>0.1587</td>
+                    <td>0.2621</td>
+                    <td class="best">0.1583</td>
+                  </tr>
+                  <tr>
+                    <th>V101</th>
+                    <td>0.0940</td>
+                    <td class="second">0.0889</td>
+                    <td class="best">0.0484</td>
+                    <td>0.1569</td>
+                    <td>0.1536</td>
+                    <td>0.2010</td>
+                  </tr>
+                  <tr>
+                    <th>V102</th>
+                    <td>0.1400</td>
+                    <td class="second">0.1105</td>
+                    <td class="best">0.0631</td>
+                    <td>0.1222</td>
+                    <td>0.2192</td>
+                    <td>0.1160</td>
+                  </tr>
+                  <tr>
+                    <th>V103</th>
+                    <td>0.2100</td>
+                    <td>0.1875</td>
+                    <td>0.2012</td>
+                    <td class="best">0.1287</td>
+                    <td class="second">0.1700</td>
+                    <td>0.2214</td>
+                  </tr>
+                  <tr>
+                    <th>V201</th>
+                    <td>0.0900</td>
+                    <td class="second">0.0863</td>
+                    <td>0.0672</td>
+                    <td>0.1207</td>
+                    <td>0.1233</td>
+                    <td class="best">0.0611</td>
+                  </tr>
+                  <tr>
+                    <th>V202</th>
+                    <td>0.1700</td>
+                    <td class="second">0.1580</td>
+                    <td>0.1588</td>
+                    <td>--</td>
+                    <td>--</td>
+                    <td class="best">0.1003</td>
+                  </tr>
+                  <tr>
+                    <th>V203</th>
+                    <td>0.2300</td>
+                    <td>0.2775</td>
+                    <td>0.2475</td>
+                    <td>0.2881</td>
+                    <td class="second">0.1926</td>
+                    <td class="best">0.1687</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="table-note"><span class="best">Bold</span> marks the best result; <span class="second">underlined</span> marks the second-best result.</p>
+          </article>
+
+          <article class="table-panel">
+            <div class="table-title">
+              <p>Robustness Comparison</p>
+              <h3>VINS-Fusion vs. SuperVINS on UMA-VI sequences</h3>
+            </div>
+            <div class="table-scroll">
+              <table class="compact-table">
+                <thead>
+                  <tr>
+                    <th rowspan="2">UMA-VI</th>
+                    <th colspan="2">VINS-Fusion</th>
+                    <th colspan="2">SuperVINS</th>
+                  </tr>
+                  <tr>
+                    <th>Tracking</th>
+                    <th>ATE</th>
+                    <th>Tracking</th>
+                    <th>ATE</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th>conference3</th>
+                    <td><span class="track-fail">X</span></td>
+                    <td>--</td>
+                    <td><span class="track-fail">X</span></td>
+                    <td>--</td>
+                  </tr>
+                  <tr>
+                    <th>fancy1</th>
+                    <td><span class="track-ok">Y</span></td>
+                    <td>0.871</td>
+                    <td><span class="track-ok">Y</span></td>
+                    <td>0.431</td>
+                  </tr>
+                  <tr>
+                    <th>fancy2</th>
+                    <td><span class="track-fail">X</span></td>
+                    <td>--</td>
+                    <td><span class="track-ok">Y</span></td>
+                    <td>0.517</td>
+                  </tr>
+                  <tr>
+                    <th>two-floor1</th>
+                    <td><span class="track-fail">X</span></td>
+                    <td>--</td>
+                    <td><span class="track-ok">Y</span></td>
+                    <td>0.810</td>
+                  </tr>
+                  <tr>
+                    <th>two-floor2</th>
+                    <td><span class="track-fail">X</span></td>
+                    <td>--</td>
+                    <td><span class="track-ok">Y</span></td>
+                    <td>0.168</td>
+                  </tr>
+                  <tr>
+                    <th>hall1-eng</th>
+                    <td><span class="track-fail">X</span></td>
+                    <td>--</td>
+                    <td><span class="track-fail">X</span></td>
+                    <td>--</td>
+                  </tr>
+                  <tr>
+                    <th>hall1-rev</th>
+                    <td><span class="track-fail">X</span></td>
+                    <td>--</td>
+                    <td><span class="track-ok">Y</span></td>
+                    <td>0.071</td>
+                  </tr>
+                  <tr>
+                    <th>hall1-two-floor</th>
+                    <td><span class="track-fail">X</span></td>
+                    <td>--</td>
+                    <td><span class="track-ok">Y</span></td>
+                    <td>0.645</td>
+                  </tr>
+                  <tr>
+                    <th>third-floor1</th>
+                    <td><span class="track-fail">X</span></td>
+                    <td>--</td>
+                    <td><span class="track-ok">Y</span></td>
+                    <td>0.125</td>
+                  </tr>
+                  <tr>
+                    <th>third-floor-eng</th>
+                    <td><span class="track-ok">Y</span></td>
+                    <td>0.100</td>
+                    <td><span class="track-fail">X</span></td>
+                    <td>--</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="table-panel">
+            <div class="table-title">
+              <p>Runtime Evaluation</p>
+              <h3>Frame-level runtime in seconds</h3>
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th rowspan="2">Dataset</th>
+                    <th colspan="2">Feature Extraction</th>
+                    <th colspan="2">Feature Matching</th>
+                    <th colspan="2">Backend Optimization</th>
+                    <th colspan="2">Loop Frame Detection</th>
+                  </tr>
+                  <tr>
+                    <th>Mean</th>
+                    <th>Std</th>
+                    <th>Mean</th>
+                    <th>Std</th>
+                    <th>Mean</th>
+                    <th>Std</th>
+                    <th>Mean</th>
+                    <th>Std</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="group-row">
+                    <th colspan="9">EuRoC</th>
+                  </tr>
+                  <tr>
+                    <th>MH01</th>
+                    <td>0.0274</td>
+                    <td>0.0085</td>
+                    <td>0.0537</td>
+                    <td>0.0162</td>
+                    <td>0.1739</td>
+                    <td>0.0859</td>
+                    <td>0.0082</td>
+                    <td>0.0034</td>
+                  </tr>
+                  <tr>
+                    <th>MH02</th>
+                    <td>0.0273</td>
+                    <td>0.0085</td>
+                    <td>0.0572</td>
+                    <td>0.0164</td>
+                    <td>0.1909</td>
+                    <td>0.0890</td>
+                    <td>0.0105</td>
+                    <td>0.0043</td>
+                  </tr>
+                  <tr>
+                    <th>MH03</th>
+                    <td>0.0279</td>
+                    <td>0.0084</td>
+                    <td>0.0534</td>
+                    <td>0.0164</td>
+                    <td>0.1807</td>
+                    <td>0.0905</td>
+                    <td>0.0083</td>
+                    <td>0.0035</td>
+                  </tr>
+                  <tr>
+                    <th>MH04</th>
+                    <td>0.0271</td>
+                    <td>0.0083</td>
+                    <td>0.0493</td>
+                    <td>0.0164</td>
+                    <td>0.1581</td>
+                    <td>0.0964</td>
+                    <td>0.0078</td>
+                    <td>0.0034</td>
+                  </tr>
+                  <tr>
+                    <th>MH05</th>
+                    <td>0.0264</td>
+                    <td>0.0085</td>
+                    <td>0.0466</td>
+                    <td>0.0156</td>
+                    <td>0.1450</td>
+                    <td>0.0926</td>
+                    <td>0.0076</td>
+                    <td>0.0032</td>
+                  </tr>
+                  <tr class="group-row">
+                    <th colspan="9">UMA-VI</th>
+                  </tr>
+                  <tr>
+                    <th>hall1-rev</th>
+                    <td>0.0235</td>
+                    <td>0.0089</td>
+                    <td>0.0252</td>
+                    <td>0.0091</td>
+                    <td>0.0719</td>
+                    <td>0.0609</td>
+                    <td>0.0022</td>
+                    <td>0.0008</td>
+                  </tr>
+                  <tr>
+                    <th>hall1-two-floor</th>
+                    <td>0.0216</td>
+                    <td>0.0090</td>
+                    <td>0.0194</td>
+                    <td>0.0089</td>
+                    <td>0.0521</td>
+                    <td>0.0350</td>
+                    <td>0.0017</td>
+                    <td>0.0006</td>
+                  </tr>
+                  <tr>
+                    <th>third-floor1</th>
+                    <td>0.0235</td>
+                    <td>0.0094</td>
+                    <td>0.0377</td>
+                    <td>0.0161</td>
+                    <td>0.1118</td>
+                    <td>0.0720</td>
+                    <td>0.0051</td>
+                    <td>0.0016</td>
+                  </tr>
+                  <tr>
+                    <th>two-floor1</th>
+                    <td>0.0240</td>
+                    <td>0.0088</td>
+                    <td>0.0380</td>
+                    <td>0.0119</td>
+                    <td>0.1568</td>
+                    <td>0.0937</td>
+                    <td>0.0055</td>
+                    <td>0.0022</td>
+                  </tr>
+                  <tr>
+                    <th>two-floor2</th>
+                    <td>0.0225</td>
+                    <td>0.0083</td>
+                    <td>0.0262</td>
+                    <td>0.0121</td>
+                    <td>0.0747</td>
+                    <td>0.0591</td>
+                    <td>0.0027</td>
+                    <td>0.0012</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+        <div class="results-stack">
+          <figure>
+            <img src="./image/guiji1.png" alt="SuperVINS trajectory evaluation result 1">
+          </figure>
+          <figure>
+            <img src="./image/guiji2.png" alt="SuperVINS trajectory evaluation result 2">
+          </figure>
+          <figure>
+            <img src="./image/guiji3.png" alt="SuperVINS trajectory evaluation result 3">
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="band citation-band" id="citation" aria-labelledby="citation-heading">
+      <div class="inner citation-layout">
+        <div class="section-heading">
+          <p class="eyebrow">Citation</p>
+          <h2 id="citation-heading">BibTeX</h2>
+        </div>
+        <pre><code>@article{luo2025supervins,
+  title={SuperVINS: A Real-Time Visual-Inertial SLAM Framework for Challenging Imaging Conditions},
+  author={Luo, Hongkun and Liu, Yang and Guo, Chi and Li, Zengke and Song, Weiwei},
+  journal={IEEE Sensors Journal},
+  year={2025},
+  publisher={IEEE}
+}</code></pre>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Acknowledgements: template inspiration from <a href="https://sd-complements-dino.github.io/">A-tale-of-two-features</a>.</p>
+  </footer>
 </body>
 
 </html>
